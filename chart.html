@@ -149,6 +149,7 @@
         <label><input type="checkbox" class="chart-ma" value="200">200日線</label>
         <label><input type="checkbox" id="chartRsi">RSI</label>
         <label><input type="checkbox" id="chartMacd">MACD</label>
+        <label><input type="checkbox" id="chartIchimoku">一目均衡</label>
         <label><input type="checkbox" id="chartZigzag7">ZigZag(7)</label>
         <label><input type="checkbox" id="chartZigzag20">ZigZag(20)</label>
       </div>
@@ -254,6 +255,32 @@
       return pivots.filter((point, index, array) => index === 0 || point.index !== array[index - 1].index);
     }
 
+    function ichimokuSeries(rows) {
+      const middle = (index, span) => {
+        if (index < span - 1) return null;
+        const windowRows = rows.slice(index - span + 1, index + 1);
+        const high = Math.max(...windowRows.map((row) => row.h));
+        const low = Math.min(...windowRows.map((row) => row.l));
+        return (high + low) / 2;
+      };
+      const tenkan = rows.map((_, index) => middle(index, 9));
+      const kijun = rows.map((_, index) => middle(index, 26));
+      const spanA = rows.map(() => null);
+      const spanB = rows.map(() => null);
+      const chikou = rows.map(() => null);
+      rows.forEach((row, index) => {
+        const forwardIndex = index + 26;
+        if (Number.isFinite(tenkan[index]) && Number.isFinite(kijun[index])) {
+          spanA[forwardIndex] = (tenkan[index] + kijun[index]) / 2;
+        }
+        const baseB = middle(index, 52);
+        if (Number.isFinite(baseB)) spanB[forwardIndex] = baseB;
+        const backwardIndex = index - 26;
+        if (backwardIndex >= 0) chikou[backwardIndex] = row.c;
+      });
+      return { tenkan, kijun, spanA, spanB, chikou };
+    }
+
     function svgPath(points) {
       return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
     }
@@ -325,6 +352,7 @@
       const selectedMas = Array.from(document.querySelectorAll(".chart-ma:checked")).map((input) => Number(input.value));
       const showRsi = document.getElementById("chartRsi").checked;
       const showMacd = document.getElementById("chartMacd").checked;
+      const showIchimoku = document.getElementById("chartIchimoku").checked;
       const showZigzag7 = document.getElementById("chartZigzag7").checked;
       const showZigzag20 = document.getElementById("chartZigzag20").checked;
       const width = 1780;
@@ -335,16 +363,27 @@
       const left = 68;
       const right = 34;
       const chartWidth = width - left - right;
+      const plotCount = showIchimoku ? data.length + 26 : data.length;
       const panels = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
       const volumeTop = top + mainHeight + 34;
       const dateLabelY = volumeTop + volumeHeight + 28;
       const height = dateLabelY + 28 + (panels - 1) * subHeight;
-      const x = (index) => left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
+      const x = (index) => left + (plotCount <= 1 ? 0 : index * chartWidth / (plotCount - 1));
       const maSeries = Object.fromEntries(selectedMas.map((span) => [
         span,
         movingAverage(fullCloses, span).slice(visibleStart)
       ]));
-      const priceValues = data.flatMap((row) => [row.h, row.l]).concat(Object.values(maSeries).flat().filter(Number.isFinite));
+      const ichimokuFull = showIchimoku ? ichimokuSeries(fullData) : null;
+      const ichimokuVisible = showIchimoku ? {
+        tenkan: ichimokuFull.tenkan.slice(visibleStart, visibleStart + data.length + 26),
+        kijun: ichimokuFull.kijun.slice(visibleStart, visibleStart + data.length + 26),
+        spanA: ichimokuFull.spanA.slice(visibleStart, visibleStart + data.length + 26),
+        spanB: ichimokuFull.spanB.slice(visibleStart, visibleStart + data.length + 26),
+        chikou: ichimokuFull.chikou.slice(visibleStart, visibleStart + data.length + 26)
+      } : null;
+      const priceValues = data.flatMap((row) => [row.h, row.l])
+        .concat(Object.values(maSeries).flat().filter(Number.isFinite))
+        .concat(showIchimoku ? Object.values(ichimokuVisible).flat().filter(Number.isFinite) : []);
       const minPrice = Math.min(...priceValues);
       const maxPrice = Math.max(...priceValues);
       const pad = Math.max((maxPrice - minPrice) * 0.08, 1);
@@ -391,6 +430,28 @@
         if (points.length < 2) return "";
         return `<path d="${svgPath(points)}" fill="none" stroke="${maColors[span] || "#334155"}" stroke-width="2"/><text x="${width - right - 88}" y="${top + 18 + index * 18}" fill="${maColors[span] || "#334155"}" font-size="13" font-weight="800">${span}日線</text>`;
       }).join("");
+      const ichimokuLine = (values, color, dash = "") => {
+        const points = values.map((value, index) => Number.isFinite(value) ? { x: x(index), y: yPrice(value) } : null).filter(Boolean);
+        if (points.length < 2) return "";
+        return `<path d="${svgPath(points)}" fill="none" stroke="${color}" stroke-width="1.7"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
+      };
+      const ichimokuCloud = showIchimoku ? ichimokuVisible.spanA.map((value, index) => {
+        const other = ichimokuVisible.spanB[index];
+        if (!Number.isFinite(value) || !Number.isFinite(other)) return null;
+        return { index, a: value, b: other };
+      }).filter(Boolean) : [];
+      const ichimokuCloudShape = ichimokuCloud.length > 1
+        ? `<path d="${svgPath(ichimokuCloud.map((point) => ({ x: x(point.index), y: yPrice(point.a) })))} L ${ichimokuCloud.slice().reverse().map((point) => `${x(point.index).toFixed(1)} ${yPrice(point.b).toFixed(1)}`).join(" L ")} Z" fill="#0f766e" opacity=".10" stroke="none"/>`
+        : "";
+      const ichimokuLines = showIchimoku ? `
+        ${ichimokuCloudShape}
+        ${ichimokuLine(ichimokuVisible.tenkan, "#e11d48")}
+        ${ichimokuLine(ichimokuVisible.kijun, "#1d4ed8")}
+        ${ichimokuLine(ichimokuVisible.spanA, "#0f766e")}
+        ${ichimokuLine(ichimokuVisible.spanB, "#b45309")}
+        ${ichimokuLine(ichimokuVisible.chikou, "#64748b", "4 4")}
+        <text x="${width - right - 118}" y="${top + 18 + selectedMas.length * 18}" fill="#0f766e" font-size="13" font-weight="800">一目均衡</text>
+      ` : "";
       const zigzagLine = (depth, color) => {
         const points = zigzagPoints(data, depth).map((point) => ({ x: x(point.index), y: yPrice(point.value) }));
         if (points.length < 2) return "";
@@ -441,6 +502,7 @@
         ${grid}
         ${boundaryLines}
         ${candles}
+        ${ichimokuLines}
         ${maLines}
         ${showZigzag7 ? zigzagLine(7, "#2563eb") : ""}
         ${showZigzag20 ? zigzagLine(20, "#b45309") : ""}
@@ -453,7 +515,7 @@
       meta.textContent = `株価データ取得: ${fetched} / 更新予定: ${schedule} / 終値: ${closes.at(-1).toLocaleString("ja-JP")}円`;
       const svg = stage.querySelector("svg");
       if (svg) {
-        addCrosshair(svg, { data, width, top, left, right, mainHeight, chartWidth, maxPrice, minPrice, pad });
+        addCrosshair(svg, { data, width, top, left, right, mainHeight, chartWidth: x(data.length - 1) - left, maxPrice, minPrice, pad });
       }
     }
 
@@ -464,7 +526,7 @@
       history.replaceState(null, "", `?code=${encodeURIComponent(selectedCode)}`);
       renderChart();
     });
-    document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartZigzag7, #chartZigzag20").forEach((input) => {
+    document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
       input.addEventListener("change", renderChart);
     });
   </script>

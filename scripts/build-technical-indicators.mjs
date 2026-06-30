@@ -88,10 +88,23 @@ function macdDetails(closes) {
   });
   const macd = macdSeries.at(-1);
   const signal = signalSeries.at(-1);
+  const goldenCrossWithinBelowZero = (days) => {
+    const recentStart = Math.max(1, macdSeries.length - days);
+    return Number.isFinite(macd) && macd <= 0 && macdSeries.some((value, index) => {
+      if (index < recentStart) return false;
+      const previousMacd = macdSeries[index - 1];
+      const previousSignal = signalSeries[index - 1];
+      const currentSignal = signalSeries[index];
+      if (![previousMacd, previousSignal, value, currentSignal].every(Number.isFinite)) return false;
+      return previousMacd <= previousSignal && value > currentSignal && value <= 0;
+    });
+  };
   return {
     macd,
     signal,
     histogram: Number.isFinite(macd) && Number.isFinite(signal) ? macd - signal : null,
+    goldenCrossWithin5BelowZero: goldenCrossWithinBelowZero(5),
+    goldenCrossWithin10BelowZero: goldenCrossWithinBelowZero(10),
   };
 }
 
@@ -261,6 +274,8 @@ function indicatorsFor(stock, prices) {
   output.macd = round(macdOutput.macd);
   output.macdSignal = round(macdOutput.signal);
   output.macdHistogram = round(macdOutput.histogram);
+  output.macdGoldenCrossWithin5BelowZero = macdOutput.goldenCrossWithin5BelowZero;
+  output.macdGoldenCrossWithin10BelowZero = macdOutput.goldenCrossWithin10BelowZero;
   output.rsi = round(rsi(closes));
 
   for (const depth of [7, 20]) {
@@ -335,6 +350,8 @@ const browserRows = output.data.map((row) => ({
   macd: row.macd,
   macdSignal: row.macdSignal,
   macdHistogram: row.macdHistogram,
+  macdGoldenCrossWithin5BelowZero: row.macdGoldenCrossWithin5BelowZero,
+  macdGoldenCrossWithin10BelowZero: row.macdGoldenCrossWithin10BelowZero,
   rsi: row.rsi,
   zigzag7: row.zigzag7,
   zigzag7Changed: row.zigzag7Changed,
