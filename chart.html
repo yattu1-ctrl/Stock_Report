@@ -142,6 +142,9 @@
         <label><input type="radio" name="chartPeriod" value="daily" checked>日足</label>
         <label><input type="radio" name="chartPeriod" value="weekly">週足</label>
         <label><input type="radio" name="chartPeriod" value="monthly">月足</label>
+        <label><input type="radio" name="chartDailyLimit" value="200" checked>200日</label>
+        <label><input type="radio" name="chartDailyLimit" value="500">500日</label>
+        <label><input type="radio" name="chartDailyLimit" value="1000">1000日</label>
         <label><input type="checkbox" class="chart-ma" value="5" checked>5日線</label>
         <label><input type="checkbox" class="chart-ma" value="10">10日線</label>
         <label><input type="checkbox" class="chart-ma" value="25" checked>25日線</label>
@@ -345,7 +348,8 @@
       const sourceRows = period === "monthly" && window.priceHistoryMonthlyRows?.[selectedCode]?.length
         ? window.priceHistoryMonthlyRows[selectedCode]
         : rows;
-      const limit = period === "daily" ? 260 : period === "weekly" ? 200 : 360;
+      const dailyLimit = Number(document.querySelector("input[name='chartDailyLimit']:checked")?.value || 200);
+      const limit = period === "daily" ? dailyLimit : period === "weekly" ? 200 : 360;
       const fullData = period === "monthly" ? sourceRows : aggregateHistory(sourceRows, period);
       const data = fullData.slice(-limit);
       const visibleStart = Math.max(0, fullData.length - data.length);
@@ -528,7 +532,7 @@
       history.replaceState(null, "", `?code=${encodeURIComponent(selectedCode)}`);
       renderChart();
     });
-    document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
+    document.querySelectorAll("input[name='chartPeriod'], input[name='chartDailyLimit'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
       input.addEventListener("change", renderChart);
     });
   </script>

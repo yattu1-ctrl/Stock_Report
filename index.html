@@ -1285,6 +1285,9 @@
               <label><input type="radio" name="chartPeriod" value="daily" checked>日足</label>
               <label><input type="radio" name="chartPeriod" value="weekly">週足</label>
               <label><input type="radio" name="chartPeriod" value="monthly">月足</label>
+              <label><input type="radio" name="chartDailyLimit" value="200" checked>200日</label>
+              <label><input type="radio" name="chartDailyLimit" value="500">500日</label>
+              <label><input type="radio" name="chartDailyLimit" value="1000">1000日</label>
               <label><input type="checkbox" class="chart-ma" value="5" checked>5日線</label>
               <label><input type="checkbox" class="chart-ma" value="10">10日線</label>
               <label><input type="checkbox" class="chart-ma" value="25" checked>25日線</label>
@@ -2809,7 +2812,9 @@
       }
       const period = document.querySelector("input[name='chartPeriod']:checked")?.value || "daily";
       const fullData = aggregateHistory(rows, period);
-      const data = fullData.slice(-160);
+      const dailyLimit = Number(document.querySelector("input[name='chartDailyLimit']:checked")?.value || 200);
+      const limit = period === "daily" ? dailyLimit : period === "weekly" ? 200 : 360;
+      const data = fullData.slice(-limit);
       const visibleStart = Math.max(0, fullData.length - data.length);
       const closes = data.map((row) => row.c);
       const fullCloses = fullData.map((row) => row.c);
@@ -3021,7 +3026,7 @@
     document.querySelectorAll(".technical-ma-pattern").forEach((input) => {
       input.addEventListener("change", renderTechnicalTable);
     });
-    document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
+    document.querySelectorAll("input[name='chartPeriod'], input[name='chartDailyLimit'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
       input.addEventListener("change", renderChart);
     });
     document.getElementById("nikkeiChartButton")?.addEventListener("click", () => {
