@@ -273,6 +273,131 @@
       background: #fff;
     }
 
+    .accordion-list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    details.accordion {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      overflow: hidden;
+    }
+
+    details.accordion[open] {
+      box-shadow: 0 12px 32px rgba(24, 33, 31, .07);
+    }
+
+    details.accordion summary {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 58px;
+      padding: 13px 16px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    details.accordion summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.accordion summary::after {
+      content: "+";
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    details.accordion[open] summary::after {
+      content: "-";
+    }
+
+    .rank {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .summary-title {
+      min-width: 0;
+    }
+
+    .summary-title b {
+      display: block;
+      line-height: 1.35;
+    }
+
+    .summary-title span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 3px;
+    }
+
+    .accordion-body {
+      border-top: 1px solid var(--line);
+      padding: 14px 16px 16px;
+      background: #fff;
+    }
+
+    .stock-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stock-chip {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px 9px;
+      background: #fbfdfc;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .stock-chip small {
+      color: var(--muted);
+      font-weight: 800;
+      margin-left: 5px;
+    }
+
+    .mark-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: var(--warn);
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .mark-muted {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
     .source-list {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,6 +417,15 @@
 
     @media (max-width: 860px) {
       .hero, .grid, .checks, .source-list {
+        grid-template-columns: 1fr;
+      }
+
+      details.accordion summary {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding: 12px;
+      }
+
+      .stock-grid {
         grid-template-columns: 1fr;
       }
 
@@ -383,19 +517,128 @@
 
       <section class="block">
         <h2>分野別のサイクル位置</h2>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>分野</th><th>現在のサイクル位置</th></tr></thead>
-            <tbody>
-              <tr><td>HBM・DRAM・NAND</td><td>需給逼迫、価格上昇局面</td></tr>
-              <tr><td>AI GPU・先端ロジック</td><td>強い需要継続、供給制約あり</td></tr>
-              <tr><td>半導体製造装置</td><td>受注回復〜設備投資拡大局面</td></tr>
-              <tr><td>先端パッケージ基板</td><td>上昇局面</td></tr>
-              <tr><td>汎用ロジック・アナログ</td><td>回復途上、銘柄差あり</td></tr>
-              <tr><td>車載・産業用半導体</td><td>分野によってはまだ在庫正常化段階</td></tr>
-              <tr><td>民生・低価格メモリ</td><td>AI向けへの供給シフトで品薄感あり</td></tr>
-            </tbody>
-          </table>
+        <p>投資先としての優先順位は、需給逼迫度、価格上昇余地、国内関連銘柄への波及しやすさ、株価の織り込み度を合わせて整理しています。</p>
+        <div class="accordion-list">
+          <details class="accordion" open>
+            <summary>
+              <span class="rank">1</span>
+              <span class="summary-title"><b>HBM・DRAM・NAND</b><span>需給逼迫、価格上昇局面。AIサーバー投資の中心で、最優先で追う領域。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>価格上昇、長期契約、供給制約が続く間は、メモリ、検査、後工程、材料に波及しやすい分野です。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">キオクシアHD<small>285A</small></div>
+                <div class="stock-chip">アドバンテスト<small>6857</small></div>
+                <div class="stock-chip">日本電子材料<small>6855</small></div>
+                <div class="stock-chip">東京エレクトロン<small>8035</small></div>
+                <div class="stock-chip">SCREEN HD<small>7735</small></div>
+                <div class="stock-chip">トリケミカル研究所<small>4369</small></div>
+                <div class="stock-chip">信越化学工業<small>4063</small></div>
+                <div class="stock-chip">SUMCO<small>3436</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">2</span>
+              <span class="summary-title"><b>AI GPU・先端ロジック</b><span>強い需要継続、供給制約あり。大型主力株は織り込み度に注意。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>AI半導体、先端ロジック、EUV、先端検査に関わる銘柄群です。業績期待は強い一方、株価が先回りしやすい点を確認します。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">東京エレクトロン<small>8035</small></div>
+                <div class="stock-chip">レーザーテック<small>6920</small></div>
+                <div class="stock-chip">アドバンテスト<small>6857</small></div>
+                <div class="stock-chip">ディスコ<small>6146</small></div>
+                <div class="stock-chip">SCREEN HD<small>7735</small></div>
+                <div class="stock-chip">ソシオネクスト<small>6526</small></div>
+                <div class="stock-chip">KOKUSAI ELECTRIC<small>6525</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">3</span>
+              <span class="summary-title"><b>先端パッケージ基板</b><span>上昇局面。AI GPU、HBM、チップレット化で重要度が高い。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>AI半導体の高性能化で、基板、封止、後工程装置、実装装置が恩恵を受けやすい領域です。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">イビデン<small>4062</small></div>
+                <div class="stock-chip">TOWA<small>6315</small></div>
+                <div class="stock-chip">芝浦メカトロニクス<small>6590</small></div>
+                <div class="stock-chip">アオイ電子<small>6832</small></div>
+                <div class="stock-chip">ヤマハ発動機<small>7272</small></div>
+                <div class="stock-chip">JUKI<small>6440</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">4</span>
+              <span class="summary-title"><b>半導体製造装置</b><span>受注回復〜設備投資拡大局面。実需より株価が先に動きやすい。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>設備投資再開の恩恵を受けます。受注残、会社計画、顧客の投資ピークアウト有無を重視します。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">東京エレクトロン<small>8035</small></div>
+                <div class="stock-chip">ディスコ<small>6146</small></div>
+                <div class="stock-chip">SCREEN HD<small>7735</small></div>
+                <div class="stock-chip">KOKUSAI ELECTRIC<small>6525</small></div>
+                <div class="stock-chip">ローツェ<small>6323</small></div>
+                <div class="stock-chip">東京精密<small>7729</small></div>
+                <div class="stock-chip">タツモ<small>6266</small></div>
+                <div class="stock-chip">ダイフク<small>6383</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">5</span>
+              <span class="summary-title"><b>民生・低価格メモリ</b><span>AI向けへの供給シフトで品薄感あり。短期需給は改善しやすい。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>AI向け優先で供給が絞られると、低価格帯にも需給改善が波及します。価格の持続性を確認します。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">キオクシアHD<small>285A</small></div>
+                <div class="stock-chip">マクニカHD<small>3132</small></div>
+                <div class="stock-chip">ミネベアミツミ<small>6479</small></div>
+                <div class="stock-chip">日本電子材料<small>6855</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">6</span>
+              <span class="summary-title"><b>汎用ロジック・アナログ</b><span>回復途上、銘柄差あり。出遅れ候補だが選別が必要。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>AI主導の強さとは別に、通常需要の回復度合いを確認する領域です。車載、産業、民生の在庫正常化を見ます。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">ルネサス<small>6723</small></div>
+                <div class="stock-chip">ローム<small>6963</small></div>
+                <div class="stock-chip">サンケン電気<small>6707</small></div>
+                <div class="stock-chip">新電元工業<small>6844</small></div>
+                <div class="stock-chip">メガチップス<small>6875</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">7</span>
+              <span class="summary-title"><b>車載・産業用半導体</b><span>まだ在庫正常化段階の分野あり。投資優先度はやや下げて確認。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <p>中長期テーマはありますが、足元は在庫調整や需要回復のばらつきが残ります。下方修正リスクと回復初動を分けて見ます。</p>
+              <div class="stock-grid">
+                <div class="stock-chip">ルネサス<small>6723</small></div>
+                <div class="stock-chip">ローム<small>6963</small></div>
+                <div class="stock-chip">ミネベアミツミ<small>6479</small></div>
+                <div class="stock-chip">日置電機<small>6866</small></div>
+                <div class="stock-chip">HORIBA<small>6856</small></div>
+              </div>
+            </div>
+          </details>
         </div>
         <div class="callout warn">
           <p>主力半導体株は好材料を先取りしやすいため、「市況が良いか」よりも「次の上方修正・受注増・利益率改善が残っているか」を見る局面です。</p>
@@ -423,17 +666,92 @@
         </div>
 
         <h3>2. 建設・空調・電力・通信インフラ</h3>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>領域</th><th>主な銘柄</th><th>見るポイント</th></tr></thead>
-            <tbody>
-              <tr><td>建設・都市型DC</td><td>大林組、鹿島、大成建設、清水建設、大和ハウス、東急建設</td><td>ハイパースケールDC、都市型DC、産業施設開発の受け皿。</td></tr>
-              <tr><td>空調・冷却</td><td>ダイキン、高砂熱学、新日本空調、三機工業、大氣社、日比谷総合設備、三菱重工</td><td>AIデータセンターでは冷却効率が運用コストを左右。</td></tr>
-              <tr><td>電源・受配電</td><td>三菱電機、富士電機、明電舎、日立、GSユアサ、SWCC、関西電力、九州電力、J-POWER</td><td>受変電、UPS、非常用電源、蓄電池、大口電力需要が焦点。</td></tr>
-              <tr><td>光通信・ネットワーク</td><td>古河電工、住友電工、フジクラ、NEC、アンリツ、大井電気、NTT</td><td>DC内・DC間の高速通信、光ファイバー、海底ケーブル、光伝送。</td></tr>
-              <tr><td>不動産・用地・投資</td><td>三井不動産、三菱地所、東急、三井物産、東京センチュリー、オリックス</td><td>土地、電力接続、冷却、水、通信網がそろう立地の価値。</td></tr>
-            </tbody>
-          </table>
+        <div class="accordion-list">
+          <details class="accordion">
+            <summary>
+              <span class="rank">建</span>
+              <span class="summary-title"><b>建設・都市型DC</b><span>ハイパースケールDC、都市型DC、産業施設開発の受け皿。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">大林組<small>1802</small></div>
+                <div class="stock-chip">鹿島<small>1812</small></div>
+                <div class="stock-chip">大成建設<small>1801</small></div>
+                <div class="stock-chip">清水建設<small>1803</small></div>
+                <div class="stock-chip">大和ハウス工業<small>1925</small></div>
+                <div class="stock-chip">東急建設<small>1720</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">冷</span>
+              <span class="summary-title"><b>空調・冷却</b><span>AIデータセンターでは冷却効率が運用コストを左右。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">ダイキン工業<small>6367</small></div>
+                <div class="stock-chip">高砂熱学工業<small>1969</small></div>
+                <div class="stock-chip">新日本空調<small>1952</small></div>
+                <div class="stock-chip">三機工業<small>1961</small></div>
+                <div class="stock-chip">大氣社<small>1979</small></div>
+                <div class="stock-chip">日比谷総合設備<small>1982</small></div>
+                <div class="stock-chip">三菱重工業<small>7011</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion" open>
+            <summary>
+              <span class="rank">電</span>
+              <span class="summary-title"><b>電源・受配電</b><span>受変電、UPS、非常用電源、蓄電池、大口電力需要が焦点。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">三菱電機<small>6503</small></div>
+                <div class="stock-chip">富士電機<small>6504</small></div>
+                <div class="stock-chip">明電舎<small>6508</small></div>
+                <div class="stock-chip">日立製作所<small>6501</small></div>
+                <div class="stock-chip">GSユアサ<small>6674</small></div>
+                <div class="stock-chip">SWCC<small>5805</small></div>
+                <div class="stock-chip">関西電力<small>9503</small></div>
+                <div class="stock-chip">九州電力<small>9508</small></div>
+                <div class="stock-chip">J-POWER<small>9513</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">光</span>
+              <span class="summary-title"><b>光通信・ネットワーク</b><span>DC内・DC間の高速通信、光ファイバー、海底ケーブル、光伝送。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">古河電気工業<small>5801</small></div>
+                <div class="stock-chip">住友電気工業<small>5802</small></div>
+                <div class="stock-chip">フジクラ<small>5803</small></div>
+                <div class="stock-chip">NEC<small>6701</small></div>
+                <div class="stock-chip">アンリツ<small>6754</small></div>
+                <div class="stock-chip">大井電気<small>6822</small></div>
+                <div class="stock-chip">NTT<small>9432</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">地</span>
+              <span class="summary-title"><b>不動産・用地・投資</b><span>土地、電力接続、冷却、水、通信網がそろう立地の価値。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">三井不動産<small>8801</small></div>
+                <div class="stock-chip">三菱地所<small>8802</small></div>
+                <div class="stock-chip">東急<small>9005</small></div>
+                <div class="stock-chip">三井物産<small>8031</small></div>
+                <div class="stock-chip">東京センチュリー<small>8439</small></div>
+                <div class="stock-chip">オリックス<small>8591</small></div>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
     </article>
@@ -442,18 +760,122 @@
       <section class="block">
         <h2>半導体関連銘柄</h2>
         <p>半導体関連は、製造装置・検査・材料・後工程・メーカー・周辺設備で値動きの性格が違います。</p>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>分類</th><th>主な銘柄</th><th>値動き・確認ポイント</th></tr></thead>
-            <tbody>
-              <tr><td>半導体製造装置</td><td>東京エレクトロン、ディスコ、SCREEN、KOKUSAI、ローツェ、東京精密、芝浦メカトロニクス、タツモ、野村マイクロ、ダイフク</td><td>設備投資サイクルと受注残に敏感。株価は業績より先に動きやすい。</td></tr>
-              <tr><td>検査・テスター・計測</td><td>アドバンテスト、レーザーテック、日本電子材料、東京精密、HORIBA、日置電機、インターアクション</td><td>AI半導体・HBM・EUVなどの先端需要に連動しやすい。</td></tr>
-              <tr><td>材料・ウェハ・薬液・ガス</td><td>信越化学、SUMCO、東京応化、トリケミカル、レゾナック、富士フイルム、ADEKA、ステラケミファ、関東電化、日本酸素、住友ベークライト、日東電工</td><td>価格、稼働率、先端材料の採用状況を見る。</td></tr>
-              <tr><td>後工程・パッケージ・基板</td><td>イビデン、新光電気工業、TOWA、アオイ電子、ヤマハ発動機、JUKI</td><td>AI GPU、HBM、先端パッケージ化で重要度が上昇。</td></tr>
-              <tr><td>半導体メーカー・ファブレス</td><td>ルネサス、ローム、ソシオネクスト、キオクシア、ソニー、サンケン電気、新電元、ミネベアミツミ、メガチップス、マクニカ</td><td>メモリ、車載、パワー、SoCなど分野ごとのサイクル差が大きい。</td></tr>
-              <tr><td>工場・周辺インフラ</td><td>オルガノ、野村マイクロ、ダイダン、高砂熱学、新日本空調、三機工業、大成建設、鹿島、大林組、清水建設</td><td>半導体工場建設、クリーンルーム、超純水、空調需要を取る領域。</td></tr>
-            </tbody>
-          </table>
+        <div class="accordion-list">
+          <details class="accordion" open>
+            <summary>
+              <span class="rank">装</span>
+              <span class="summary-title"><b>半導体製造装置</b><span>設備投資サイクルと受注残に敏感。株価は業績より先に動きやすい。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">東京エレクトロン<small>8035</small></div>
+                <div class="stock-chip">ディスコ<small>6146</small></div>
+                <div class="stock-chip">SCREEN HD<small>7735</small></div>
+                <div class="stock-chip">KOKUSAI ELECTRIC<small>6525</small></div>
+                <div class="stock-chip">ローツェ<small>6323</small></div>
+                <div class="stock-chip">東京精密<small>7729</small></div>
+                <div class="stock-chip">芝浦メカトロニクス<small>6590</small></div>
+                <div class="stock-chip">タツモ<small>6266</small></div>
+                <div class="stock-chip">野村マイクロ<small>6254</small></div>
+                <div class="stock-chip">ダイフク<small>6383</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">検</span>
+              <span class="summary-title"><b>検査・テスター・計測</b><span>AI半導体・HBM・EUVなどの先端需要に連動しやすい。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">アドバンテスト<small>6857</small></div>
+                <div class="stock-chip">レーザーテック<small>6920</small></div>
+                <div class="stock-chip">日本電子材料<small>6855</small></div>
+                <div class="stock-chip">東京精密<small>7729</small></div>
+                <div class="stock-chip">HORIBA<small>6856</small></div>
+                <div class="stock-chip">日置電機<small>6866</small></div>
+                <div class="stock-chip">インターアクション<small>7725</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">材</span>
+              <span class="summary-title"><b>材料・ウェハ・薬液・ガス</b><span>価格、稼働率、先端材料の採用状況を見る。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">信越化学工業<small>4063</small></div>
+                <div class="stock-chip">SUMCO<small>3436</small></div>
+                <div class="stock-chip">東京応化工業<small>4186</small></div>
+                <div class="stock-chip">トリケミカル研究所<small>4369</small></div>
+                <div class="stock-chip">レゾナックHD<small>4004</small></div>
+                <div class="stock-chip">富士フイルムHD<small>4901</small></div>
+                <div class="stock-chip">ADEKA<small>4401</small></div>
+                <div class="stock-chip">ステラケミファ<small>4109</small></div>
+                <div class="stock-chip">関東電化工業<small>4047</small></div>
+                <div class="stock-chip">日本酸素HD<small>4091</small></div>
+                <div class="stock-chip">住友ベークライト<small>4203</small></div>
+                <div class="stock-chip">日東電工<small>6988</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">後</span>
+              <span class="summary-title"><b>後工程・パッケージ・基板</b><span>AI GPU、HBM、先端パッケージ化で重要度が上昇。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">イビデン<small>4062</small></div>
+                <div class="stock-chip">新光電気工業<small>6967</small></div>
+                <div class="stock-chip">TOWA<small>6315</small></div>
+                <div class="stock-chip">アオイ電子<small>6832</small></div>
+                <div class="stock-chip">ヤマハ発動機<small>7272</small></div>
+                <div class="stock-chip">JUKI<small>6440</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">半</span>
+              <span class="summary-title"><b>半導体メーカー・ファブレス</b><span>メモリ、車載、パワー、SoCなど分野ごとのサイクル差が大きい。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">ルネサス<small>6723</small></div>
+                <div class="stock-chip">ローム<small>6963</small></div>
+                <div class="stock-chip">ソシオネクスト<small>6526</small></div>
+                <div class="stock-chip">キオクシアHD<small>285A</small></div>
+                <div class="stock-chip">ソニーグループ<small>6758</small></div>
+                <div class="stock-chip">サンケン電気<small>6707</small></div>
+                <div class="stock-chip">新電元工業<small>6844</small></div>
+                <div class="stock-chip">ミネベアミツミ<small>6479</small></div>
+                <div class="stock-chip">メガチップス<small>6875</small></div>
+                <div class="stock-chip">マクニカHD<small>3132</small></div>
+              </div>
+            </div>
+          </details>
+          <details class="accordion">
+            <summary>
+              <span class="rank">設</span>
+              <span class="summary-title"><b>工場・周辺インフラ</b><span>半導体工場建設、クリーンルーム、超純水、空調需要を取る領域。</span></span>
+            </summary>
+            <div class="accordion-body">
+              <div class="stock-grid">
+                <div class="stock-chip">オルガノ<small>6368</small></div>
+                <div class="stock-chip">野村マイクロ<small>6254</small></div>
+                <div class="stock-chip">ダイダン<small>1980</small></div>
+                <div class="stock-chip">高砂熱学工業<small>1969</small></div>
+                <div class="stock-chip">新日本空調<small>1952</small></div>
+                <div class="stock-chip">三機工業<small>1961</small></div>
+                <div class="stock-chip">大成建設<small>1801</small></div>
+                <div class="stock-chip">鹿島<small>1812</small></div>
+                <div class="stock-chip">大林組<small>1802</small></div>
+                <div class="stock-chip">清水建設<small>1803</small></div>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
     </article>
@@ -464,20 +886,21 @@
         <p>主力半導体株よりも、半導体工場・AIデータセンターの周辺需要にいる銘柄のほうが、見直し余地を探しやすい整理です。</p>
         <div class="table-scroll">
           <table>
-            <thead><tr><th>優先度</th><th>銘柄</th><th>コード</th><th>ジャンル</th><th>見方</th></tr></thead>
+            <thead><tr><th>優先度</th><th>銘柄</th><th>コード</th><th>株価</th><th>最小投資金額</th><th>高値圏</th><th>ジャンル</th><th>見方</th></tr></thead>
             <tbody>
-              <tr><td class="priority-high">高</td><td>ダイダン</td><td class="code">1980</td><td>空調・衛生・産業施設工事</td><td>半導体工場・データセンター設備投資に乗る銘柄。受注増が翌期以降に進捗する点がポイント。</td></tr>
-              <tr><td class="priority-high">高</td><td>明電舎</td><td class="code">6508</td><td>変圧器・電力インフラ</td><td>データセンター建設による電力需要増が背景。変圧器など受配電需要のテーマ性。</td></tr>
-              <tr><td class="priority-high">高</td><td>SWCC</td><td class="code">5805</td><td>電線・光ファイバー・電力ケーブル</td><td>電力ケーブル、光ファイバー、半導体向け部材の複合テーマ。専業ではないため認識が遅れる可能性。</td></tr>
-              <tr><td class="priority-mid">中〜高</td><td>日本電子材料</td><td class="code">6855</td><td>プローブカード</td><td>HBMなど先端半導体需要の恩恵を受ける検査部品銘柄。小型寄りで値動きは荒い。</td></tr>
-              <tr><td class="priority-mid">中〜高</td><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>次世代半導体向け材料と台湾子会社の出荷増がテーマ。中国市場や原材料費には注意。</td></tr>
-              <tr><td class="priority-mid">中</td><td>住友電工</td><td class="code">5802</td><td>光ファイバー・DC通信部材</td><td>大型株で分散度が高く、爆発力より安定寄り。DC向け通信部材の切り口。</td></tr>
-              <tr><td class="priority-mid">中</td><td>芝浦メカトロニクス</td><td class="code">6590</td><td>先端パッケージ装置</td><td>生成AI用GPU需要で、後工程・先端パッケージ向け装置が焦点。</td></tr>
-              <tr><td class="priority-watch">押し目監視</td><td>オルガノ</td><td class="code">6368</td><td>超純水・半導体工場インフラ</td><td>先端半導体向け超純水・薬液精製の本命級。市場認知が進んでおり織り込み度確認が必要。</td></tr>
-              <tr><td class="priority-watch">押し目監視</td><td>野村マイクロ・サイエンス</td><td class="code">6254</td><td>超純水装置</td><td>半導体工場向け超純水の代表銘柄。株価変動が大きい。</td></tr>
+              <tr><td class="priority-high">高</td><td>ダイダン</td><td class="code">1980</td><td>2,896円</td><td>289,600円</td><td><span class="mark-muted">—</span></td><td>空調・衛生・産業施設工事</td><td>半導体工場・データセンター設備投資に乗る銘柄。受注増が翌期以降に進捗する点がポイント。</td></tr>
+              <tr><td class="priority-high">高</td><td>明電舎</td><td class="code">6508</td><td>9,820円</td><td>982,000円</td><td><span class="mark-muted">—</span></td><td>変圧器・電力インフラ</td><td>データセンター建設による電力需要増が背景。変圧器など受配電需要のテーマ性。</td></tr>
+              <tr><td class="priority-high">高</td><td>SWCC</td><td class="code">5805</td><td>13,570円</td><td>1,357,000円</td><td><span class="mark-muted">—</span></td><td>電線・光ファイバー・電力ケーブル</td><td>電力ケーブル、光ファイバー、半導体向け部材の複合テーマ。専業ではないため認識が遅れる可能性。</td></tr>
+              <tr><td class="priority-mid">中〜高</td><td>日本電子材料</td><td class="code">6855</td><td>7,870円</td><td>787,000円</td><td><span class="mark-muted">—</span></td><td>プローブカード</td><td>HBMなど先端半導体需要の恩恵を受ける検査部品銘柄。小型寄りで値動きは荒い。</td></tr>
+              <tr><td class="priority-mid">中〜高</td><td>トリケミカル研究所</td><td class="code">4369</td><td>3,500円</td><td>350,000円</td><td><span class="mark-muted">—</span></td><td>半導体材料</td><td>次世代半導体向け材料と台湾子会社の出荷増がテーマ。中国市場や原材料費には注意。</td></tr>
+              <tr><td class="priority-mid">中</td><td>住友電工</td><td class="code">5802</td><td>2,928円</td><td>292,800円</td><td><span class="mark-muted">—</span></td><td>光ファイバー・DC通信部材</td><td>大型株で分散度が高く、爆発力より安定寄り。DC向け通信部材の切り口。</td></tr>
+              <tr><td class="priority-mid">中</td><td>芝浦メカトロニクス</td><td class="code">6590</td><td>4,515円</td><td>451,500円</td><td><span class="mark-muted">—</span></td><td>先端パッケージ装置</td><td>生成AI用GPU需要で、後工程・先端パッケージ向け装置が焦点。</td></tr>
+              <tr><td class="priority-watch">押し目監視</td><td>オルガノ</td><td class="code">6368</td><td>16,245円</td><td>1,624,500円</td><td><span class="mark-muted">—</span></td><td>超純水・半導体工場インフラ</td><td>先端半導体向け超純水・薬液精製の本命級。市場認知が進んでおり織り込み度確認が必要。</td></tr>
+              <tr><td class="priority-watch">押し目監視</td><td>野村マイクロ・サイエンス</td><td class="code">6254</td><td>4,950円</td><td>495,000円</td><td><span class="mark-pill">年初来高値圏</span></td><td>超純水装置</td><td>半導体工場向け超純水の代表銘柄。株価変動が大きい。</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">株価はYahoo Finance chart APIから取得した2026年6月30日10:26〜10:28頃の値。最小投資金額は単元株数100株で概算。高値圏は現在値が年初来高値または上場来高値から10%以内の場合に表示。</p>
       </section>
 
       <section class="block">
