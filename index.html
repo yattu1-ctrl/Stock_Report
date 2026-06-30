@@ -492,6 +492,94 @@
       color: #15803d;
     }
 
+    .new-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 16px;
+      border-radius: 999px;
+      padding: 0 5px;
+      margin-left: 5px;
+      background: #fff4df;
+      color: #b45309;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    .chart-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .chart-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .chart-title {
+      font-weight: 900;
+      color: var(--accent-3);
+    }
+
+    .chart-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      align-items: center;
+      color: var(--accent-3);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .chart-controls label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+    }
+
+    .chart-stage {
+      min-height: 360px;
+      overflow-x: auto;
+    }
+
+    .chart-stage svg {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .chart-placeholder {
+      display: grid;
+      place-items: center;
+      min-height: 320px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    #technicalTable tbody tr {
+      cursor: pointer;
+    }
+
+    #technicalTable tbody tr:hover {
+      background: var(--soft);
+    }
+
     .news-links {
       display: flex;
       flex-wrap: wrap;
@@ -1098,6 +1186,11 @@
         <div class="callout warn">
           <p>PER、PBR、ROEなどのファンダメンタル指標はデータ列を先に用意しています。現時点では未入力のため、実データ連携後に値が入ります。</p>
         </div>
+        <div class="screen-mode" aria-label="銘柄一覧スクリーニング条件">
+          <span>スクリーニング条件:</span>
+          <label><input type="radio" name="stockScreenMode" value="and" checked>AND</label>
+          <label><input type="radio" name="stockScreenMode" value="or">OR</label>
+        </div>
         <div class="table-controls" id="metricControls" aria-label="表示する指標列"></div>
         <div class="table-scroll">
           <table id="stockListTable">
@@ -1124,6 +1217,28 @@
             <thead></thead>
             <tbody></tbody>
           </table>
+        </div>
+        <div class="chart-panel" id="technicalChartPanel">
+          <div class="chart-head">
+            <div class="chart-title" id="chartTitle">銘柄行をクリックするとチャートを表示します</div>
+            <div class="chart-controls" aria-label="チャート設定">
+              <label><input type="radio" name="chartPeriod" value="daily" checked>日足</label>
+              <label><input type="radio" name="chartPeriod" value="weekly">週足</label>
+              <label><input type="radio" name="chartPeriod" value="monthly">月足</label>
+              <label><input type="checkbox" class="chart-ma" value="5" checked>5日線</label>
+              <label><input type="checkbox" class="chart-ma" value="10">10日線</label>
+              <label><input type="checkbox" class="chart-ma" value="25" checked>25日線</label>
+              <label><input type="checkbox" class="chart-ma" value="75">75日線</label>
+              <label><input type="checkbox" class="chart-ma" value="200">200日線</label>
+              <label><input type="checkbox" id="chartRsi">RSI</label>
+              <label><input type="checkbox" id="chartMacd">MACD</label>
+              <label><input type="checkbox" id="chartZigzag7">ZigZag(7)</label>
+              <label><input type="checkbox" id="chartZigzag20">ZigZag(20)</label>
+            </div>
+          </div>
+          <div class="chart-stage" id="chartStage">
+            <div class="chart-placeholder">テクニカル表の銘柄行をクリックしてください</div>
+          </div>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">移動平均線の上昇率は、当日移動平均と前営業日の同期間移動平均を比較。株価上昇率は現在値と指定営業日前の終値を比較。MACDは12日EMA-26日EMA、RSIは14日で計算。</p>
       </section>
@@ -1167,6 +1282,39 @@
               <tr><td>三機工業</td><td class="code">1961</td><td>建築設備・空調</td><td>2,975円</td><td>100株</td><td>297,500円</td><td>14.9%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/1961.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=1961" target="_blank" rel="noopener">株探</a></div></td><td>空調・電気・衛生などDC建設周辺の設備需要。</td></tr>
               <tr><td>NTT</td><td class="code">9432</td><td>通信・DC基盤</td><td>145.2円</td><td>100株</td><td>14,520円</td><td>0.7%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/9432.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=9432" target="_blank" rel="noopener">株探</a></div></td><td>通信・DC基盤の補助枠。少額でテーマ接点を追加。</td></tr>
               <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>62,280円</td><td>3.1%</td><td><span class="mark-muted">—</span></td><td>決算後の押し目、追加候補、リスク調整用。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>従来モデルA: 分散型</h2>
+        <p>1銘柄40万円以内の制限を外し、テーマ純度を少し高めた前回モデルです。日本電子材料を入れるため、検査・HBM寄りの色が強くなります。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>ニュース</th><th>狙い</th></tr></thead>
+            <tbody>
+              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,896円</td><td>100株</td><td>289,600円</td><td>14.5%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/1980.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=1980" target="_blank" rel="noopener">株探</a></div></td><td>半導体工場・DC設備投資の周辺需要。</td></tr>
+              <tr><td>日本電子材料</td><td class="code">6855</td><td>プローブカード</td><td>7,870円</td><td>100株</td><td>787,000円</td><td>39.4%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/6855.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6855" target="_blank" rel="noopener">株探</a></div></td><td>HBM・先端半導体検査の高純度テーマ。</td></tr>
+              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,500円</td><td>100株</td><td>350,000円</td><td>17.5%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/4369.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=4369" target="_blank" rel="noopener">株探</a></div></td><td>次世代半導体材料と台湾向け出荷。</td></tr>
+              <tr><td>住友電工</td><td class="code">5802</td><td>光ファイバー・通信部材</td><td>2,928円</td><td>100株</td><td>292,800円</td><td>14.6%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/5802.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=5802" target="_blank" rel="noopener">株探</a></div></td><td>DC通信部材を大型株で持つ安定寄り枠。</td></tr>
+              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>280,600円</td><td>14.0%</td><td><span class="mark-muted">—</span></td><td>決算後の押し目、追加候補、リスク調整用。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>従来モデルB: インフラ集中型</h2>
+        <p>1銘柄あたりの金額制限を外し、AIデータセンターの電力・ケーブル・空調と半導体材料に寄せる前回モデルです。SWCCの比率が高くなるため、値動きの偏りには注意します。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>ニュース</th><th>狙い</th></tr></thead>
+            <tbody>
+              <tr><td>SWCC</td><td class="code">5805</td><td>電線・光ファイバー・電力ケーブル</td><td>13,570円</td><td>100株</td><td>1,357,000円</td><td>67.9%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/5805.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=5805" target="_blank" rel="noopener">株探</a></div></td><td>DC電力ケーブル、光通信、半導体周辺部材の複合テーマ。</td></tr>
+              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,896円</td><td>100株</td><td>289,600円</td><td>14.5%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/1980.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=1980" target="_blank" rel="noopener">株探</a></div></td><td>空調・衛生・産業施設工事の受注進捗期待。</td></tr>
+              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,500円</td><td>100株</td><td>350,000円</td><td>17.5%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/4369.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=4369" target="_blank" rel="noopener">株探</a></div></td><td>半導体材料でテーマ純度を補完。</td></tr>
+              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>3,400円</td><td>0.2%</td><td><span class="mark-muted">—</span></td><td>ほぼ満額投資のため、追加余力はほぼなし。</td></tr>
             </tbody>
           </table>
         </div>
@@ -1409,6 +1557,7 @@
   </footer>
 
   <script src="data/technical-indicators.js"></script>
+  <script src="data/price-history-200d.js"></script>
   <script>
     const tabs = Array.from(document.querySelectorAll(".tab"));
     const panels = Array.from(document.querySelectorAll(".panel"));
@@ -1426,7 +1575,9 @@
       ["ma5Slope", "5日線上昇率"], ["ma10Slope", "10日線上昇率"], ["ma25Slope", "25日線上昇率"], ["ma75Slope", "75日線上昇率"], ["ma100Slope", "100日線上昇率"], ["ma200Slope", "200日線上昇率"],
       ["ma5Divergence", "5日線乖離率"], ["ma10Divergence", "10日線乖離率"], ["ma25Divergence", "25日線乖離率"], ["ma75Divergence", "75日線乖離率"], ["ma200Divergence", "200日線乖離率"],
       ["priceChange5", "5日株価上昇率"], ["priceChange10", "10日株価上昇率"], ["priceChange25", "25日株価上昇率"],
-      ["macd", "MACD"], ["rsi", "RSI"], ["zigzag7", "ZigZag 7"], ["zigzag20", "ZigZag 20"]
+      ["macd", "MACD"], ["rsi", "RSI"],
+      ["zigzag7", "ZigZag 7"], ["zigzag7UpTurnPrice", "ZigZag7 上昇転換目安"], ["zigzag7DownTurnPrice", "ZigZag7 下降転換目安"],
+      ["zigzag20", "ZigZag 20"], ["zigzag20UpTurnPrice", "ZigZag20 上昇転換目安"], ["zigzag20DownTurnPrice", "ZigZag20 下降転換目安"]
     ];
     const stockRows = [
       ["キオクシアHD","285A","半導体メーカー",88490],["アドバンテスト","6857","検査・テスター",32160],["日本電子材料","6855","検査・テスター",7890],["東京エレクトロン","8035","半導体製造装置",77280],
@@ -1453,6 +1604,7 @@
     ].map(([name, code, sector, price]) => ({ name, code, sector, price, minPurchase: price == null ? null : price * 100 }));
     let stockSort = { key: "code", direction: "asc" };
     let technicalSort = { key: "code", direction: "asc" };
+    let selectedChartCode = null;
 
     function activateTab(id) {
       tabs.forEach((tab) => {
@@ -1486,7 +1638,7 @@
     function formatTechnicalValue(value, key) {
       if (value == null || value === "") return "—";
       if (key === "zigzag7" || key === "zigzag20") return trendBadge(value);
-      if (key === "currentPrice" || key.startsWith("ma")) {
+      if (key === "currentPrice" || key.includes("TurnPrice") || key.startsWith("ma")) {
         if (key.includes("Slope") || key.includes("Divergence")) return colorNumber(value, `${Number(value).toLocaleString("ja-JP")}%`);
         return `${Number(value).toLocaleString("ja-JP")}円`;
       }
@@ -1494,6 +1646,15 @@
       if (key === "macd") return colorNumber(value, Number(value).toLocaleString("ja-JP"));
       if (key === "rsi") return Number(value).toLocaleString("ja-JP");
       return String(value);
+    }
+
+    function formatTechnicalCell(row, key) {
+      const value = getTechnicalValue(row, key);
+      const base = formatTechnicalValue(value, key);
+      if ((key === "zigzag7" || key === "zigzag20") && row[`${key}Changed`]) {
+        return `${base}<span class="new-badge">NEW</span>`;
+      }
+      return base;
     }
 
     function colorNumber(value, label) {
@@ -1524,11 +1685,52 @@
       return row[key] ?? null;
     }
 
+    function isRateMetric(key, label) {
+      return key.includes("Change") || key.includes("Growth") || key === "inventoryChange" || label.includes("増減率") || label.includes("上昇率");
+    }
+
+    function stockFilterOptions(key, label) {
+      if (isRateMetric(key, label)) {
+        return [
+          ["all", "すべて"],
+          ["positive", "上昇"],
+          ["negative", "下降"]
+        ];
+      }
+      return [
+        ["all", "すべて"],
+        ["positive", "プラス"],
+        ["negative", "マイナス"]
+      ];
+    }
+
+    function getStockFilterSign(row, key) {
+      const number = Number(getStockValue(row, key));
+      if (!Number.isFinite(number)) return null;
+      if (number > 0) return 1;
+      if (number < 0) return -1;
+      return 0;
+    }
+
+    function matchesStockFilter(row, key, filter) {
+      if (filter === "all") return true;
+      const sign = getStockFilterSign(row, key);
+      if (sign == null) return false;
+      if (filter === "positive") return sign > 0;
+      if (filter === "negative") return sign < 0;
+      return true;
+    }
+
     function renderMetricControls() {
       const controls = document.getElementById("metricControls");
       if (!controls) return;
       controls.innerHTML = metricColumns.map(([key, label]) => (
-        `<label class="metric-toggle"><input type="checkbox" value="${key}">${label}</label>`
+        `<div class="metric-filter">
+          <label><input type="checkbox" value="${key}">${label}</label>
+          <select data-stock-filter="${key}" aria-label="${label}のスクリーニング">
+            ${stockFilterOptions(key, label).map(([value, text]) => `<option value="${value}">${text}</option>`).join("")}
+          </select>
+        </div>`
       )).join("");
       controls.addEventListener("change", renderStockListTable);
     }
@@ -1537,11 +1739,20 @@
       const table = document.getElementById("stockListTable");
       if (!table) return;
       const checked = Array.from(document.querySelectorAll("#metricControls input:checked")).map((input) => input.value);
+      const screenMode = document.querySelector("input[name='stockScreenMode']:checked")?.value || "and";
+      const activeFilters = checked.map((key) => ({
+        key,
+        filter: document.querySelector(`#metricControls select[data-stock-filter="${key}"]`)?.value || "all"
+      })).filter((item) => item.filter !== "all");
       const baseColumns = [
         ["name", "銘柄名"], ["code", "コード"], ["sector", "セクタ"], ["price", "現在価格"], ["minPurchase", "最小購入"]
       ];
       const activeColumns = baseColumns.concat(metricColumns.filter(([key]) => checked.includes(key)));
-      const sortedRows = [...stockRows].sort((a, b) => {
+      const filteredRows = activeFilters.length === 0 ? stockRows : stockRows.filter((row) => {
+        const results = activeFilters.map(({ key, filter }) => matchesStockFilter(row, key, filter));
+        return screenMode === "or" ? results.some(Boolean) : results.every(Boolean);
+      });
+      const sortedRows = [...filteredRows].sort((a, b) => {
         const av = getStockValue(a, stockSort.key);
         const bv = getStockValue(b, stockSort.key);
         if (av == null && bv == null) return 0;
@@ -1582,6 +1793,9 @@
           ["rsiHigh", "70以上"],
           ["rsiLow", "30以下"]
         ];
+      }
+      if (key.includes("TurnPrice")) {
+        return [["all", "すべて"]];
       }
       return [
         ["all", "すべて"],
@@ -1634,6 +1848,175 @@
       controls.addEventListener("change", renderTechnicalTable);
     }
 
+    function aggregateHistory(rows, period) {
+      if (period === "daily") return rows;
+      const groups = new Map();
+      rows.forEach((row) => {
+        const date = new Date(`${row.d}T00:00:00+09:00`);
+        let key;
+        if (period === "monthly") {
+          key = row.d.slice(0, 7);
+        } else {
+          const monday = new Date(date);
+          const day = monday.getDay() || 7;
+          monday.setDate(monday.getDate() - day + 1);
+          key = monday.toISOString().slice(0, 10);
+        }
+        if (!groups.has(key)) {
+          groups.set(key, { d: row.d, o: row.o, h: row.h, l: row.l, c: row.c, v: row.v || 0 });
+          return;
+        }
+        const group = groups.get(key);
+        group.h = Math.max(group.h, row.h);
+        group.l = Math.min(group.l, row.l);
+        group.c = row.c;
+        group.v += row.v || 0;
+        group.d = row.d;
+      });
+      return Array.from(groups.values());
+    }
+
+    function movingAverage(values, span) {
+      return values.map((_, index) => {
+        if (index < span - 1) return null;
+        const slice = values.slice(index - span + 1, index + 1);
+        return slice.reduce((sum, value) => sum + value, 0) / span;
+      });
+    }
+
+    function ema(values, span) {
+      const k = 2 / (span + 1);
+      return values.reduce((acc, value, index) => {
+        acc.push(index === 0 ? value : value * k + acc[index - 1] * (1 - k));
+        return acc;
+      }, []);
+    }
+
+    function macdValues(closes) {
+      const ema12 = ema(closes, 12);
+      const ema26 = ema(closes, 26);
+      return closes.map((_, index) => ema12[index] - ema26[index]);
+    }
+
+    function rsiValues(closes, span = 14) {
+      return closes.map((_, index) => {
+        if (index < span) return null;
+        let gains = 0;
+        let losses = 0;
+        for (let i = index - span + 1; i <= index; i += 1) {
+          const diff = closes[i] - closes[i - 1];
+          if (diff >= 0) gains += diff;
+          else losses -= diff;
+        }
+        if (losses === 0) return 100;
+        const rs = gains / losses;
+        return 100 - (100 / (1 + rs));
+      });
+    }
+
+    function zigzagPoints(rows, depth) {
+      const pivots = [];
+      for (let i = depth; i < rows.length - depth; i += 1) {
+        const windowRows = rows.slice(i - depth, i + depth + 1);
+        const high = Math.max(...windowRows.map((row) => row.h));
+        const low = Math.min(...windowRows.map((row) => row.l));
+        if (rows[i].h === high) pivots.push({ index: i, value: rows[i].h });
+        if (rows[i].l === low) pivots.push({ index: i, value: rows[i].l });
+      }
+      return pivots.filter((point, index, array) => index === 0 || point.index !== array[index - 1].index);
+    }
+
+    function svgPath(points) {
+      return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+    }
+
+    function renderChart() {
+      const stage = document.getElementById("chartStage");
+      const title = document.getElementById("chartTitle");
+      if (!stage || !title) return;
+      if (!selectedChartCode) {
+        stage.innerHTML = `<div class="chart-placeholder">テクニカル表の銘柄行をクリックしてください</div>`;
+        return;
+      }
+      const rows = window.priceHistoryRows?.[selectedChartCode] || [];
+      const stock = stockRows.find((row) => String(row.code) === String(selectedChartCode));
+      if (rows.length < 5) {
+        stage.innerHTML = `<div class="chart-placeholder">チャート用データがありません</div>`;
+        return;
+      }
+      const period = document.querySelector("input[name='chartPeriod']:checked")?.value || "daily";
+      const data = aggregateHistory(rows, period).slice(-160);
+      const closes = data.map((row) => row.c);
+      const selectedMas = Array.from(document.querySelectorAll(".chart-ma:checked")).map((input) => Number(input.value));
+      const showRsi = document.getElementById("chartRsi")?.checked;
+      const showMacd = document.getElementById("chartMacd")?.checked;
+      const showZigzag7 = document.getElementById("chartZigzag7")?.checked;
+      const showZigzag20 = document.getElementById("chartZigzag20")?.checked;
+      const width = 980;
+      const mainHeight = 280;
+      const subHeight = 95;
+      const top = 22;
+      const left = 54;
+      const right = 24;
+      const chartWidth = width - left - right;
+      const panels = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
+      const height = top + mainHeight + (panels - 1) * subHeight + 34;
+      const x = (index) => left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
+      const maSeries = Object.fromEntries(selectedMas.map((span) => [span, movingAverage(closes, span)]));
+      const priceValues = data.flatMap((row) => [row.h, row.l]).concat(Object.values(maSeries).flat().filter(Number.isFinite));
+      const minPrice = Math.min(...priceValues);
+      const maxPrice = Math.max(...priceValues);
+      const pad = Math.max((maxPrice - minPrice) * 0.08, 1);
+      const yPrice = (value) => top + (maxPrice + pad - value) * mainHeight / (maxPrice - minPrice + pad * 2);
+      const pricePoints = closes.map((value, index) => ({ x: x(index), y: yPrice(value) }));
+      const maColors = { 5: "#2563eb", 10: "#0f766e", 25: "#b45309", 75: "#7c3aed", 200: "#64748b" };
+      const grid = [0, .25, .5, .75, 1].map((ratio) => {
+        const y = top + ratio * mainHeight;
+        const value = maxPrice + pad - ratio * (maxPrice - minPrice + pad * 2);
+        return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" stroke="#e5ebe8"/><text x="8" y="${y + 4}" fill="#63716d" font-size="11">${Math.round(value).toLocaleString("ja-JP")}</text>`;
+      }).join("");
+      const maLines = selectedMas.map((span) => {
+        const points = maSeries[span].map((value, index) => Number.isFinite(value) ? { x: x(index), y: yPrice(value) } : null).filter(Boolean);
+        if (points.length < 2) return "";
+        return `<path d="${svgPath(points)}" fill="none" stroke="${maColors[span] || "#334155"}" stroke-width="1.7"/><text x="${width - right - 78}" y="${top + 16 + selectedMas.indexOf(span) * 16}" fill="${maColors[span] || "#334155"}" font-size="12" font-weight="800">${span}日線</text>`;
+      }).join("");
+      const zigzagLine = (depth, color) => {
+        const points = zigzagPoints(data, depth).map((point) => ({ x: x(point.index), y: yPrice(point.value) }));
+        if (points.length < 2) return "";
+        return `<path d="${svgPath(points)}" fill="none" stroke="${color}" stroke-width="2.2" stroke-dasharray="5 4"/>`;
+      };
+      let subPanels = "";
+      let panelTop = top + mainHeight + 24;
+      if (showRsi) {
+        const rsi = rsiValues(closes);
+        const yRsi = (value) => panelTop + (100 - value) * (subHeight - 24) / 100;
+        const points = rsi.map((value, index) => Number.isFinite(value) ? { x: x(index), y: yRsi(value) } : null).filter(Boolean);
+        subPanels += `<text x="${left}" y="${panelTop - 6}" fill="#334155" font-size="12" font-weight="800">RSI</text><line x1="${left}" y1="${yRsi(70)}" x2="${width - right}" y2="${yRsi(70)}" stroke="#fca5a5"/><line x1="${left}" y1="${yRsi(30)}" x2="${width - right}" y2="${yRsi(30)}" stroke="#93c5fd"/><path d="${svgPath(points)}" fill="none" stroke="#7c3aed" stroke-width="1.8"/>`;
+        panelTop += subHeight;
+      }
+      if (showMacd) {
+        const macd = macdValues(closes);
+        const min = Math.min(...macd);
+        const max = Math.max(...macd);
+        const range = max - min || 1;
+        const yMacd = (value) => panelTop + (max - value) * (subHeight - 24) / range;
+        const points = macd.map((value, index) => ({ x: x(index), y: yMacd(value) }));
+        subPanels += `<text x="${left}" y="${panelTop - 6}" fill="#334155" font-size="12" font-weight="800">MACD</text><line x1="${left}" y1="${yMacd(0)}" x2="${width - right}" y2="${yMacd(0)}" stroke="#d9e1dd"/><path d="${svgPath(points)}" fill="none" stroke="#dc2626" stroke-width="1.8"/>`;
+      }
+      const periodLabel = { daily: "日足", weekly: "週足", monthly: "月足" }[period] || "日足";
+      title.textContent = `${stock?.name || selectedChartCode} (${selectedChartCode}) ${periodLabel}`;
+      stage.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${stock?.name || selectedChartCode}のチャート">
+        ${grid}
+        <path d="${svgPath(pricePoints)}" fill="none" stroke="#18211f" stroke-width="2.1"/>
+        ${maLines}
+        ${showZigzag7 ? zigzagLine(7, "#2563eb") : ""}
+        ${showZigzag20 ? zigzagLine(20, "#b45309") : ""}
+        <text x="${left}" y="${height - 10}" fill="#63716d" font-size="11">${data[0].d}</text>
+        <text x="${width - right - 74}" y="${height - 10}" fill="#63716d" font-size="11">${data[data.length - 1].d}</text>
+        ${subPanels}
+      </svg>`;
+    }
+
     function renderTechnicalTable() {
       const table = document.getElementById("technicalTable");
       if (!table) return;
@@ -1668,7 +2051,7 @@
         return `<th class="sortable${active}" data-sort="${key}">${label}</th>`;
       }).join("")}</tr>`;
       table.querySelector("tbody").innerHTML = sortedRows.map((row) => (
-        `<tr>${activeColumns.map(([key]) => `<td>${formatTechnicalValue(getTechnicalValue(row, key), key)}</td>`).join("")}</tr>`
+        `<tr data-code="${row.code}">${activeColumns.map(([key]) => `<td>${formatTechnicalCell(row, key)}</td>`).join("")}</tr>`
       )).join("");
       table.querySelectorAll("th.sortable").forEach((th) => {
         th.addEventListener("click", () => {
@@ -1680,13 +2063,25 @@
           renderTechnicalTable();
         });
       });
+      table.querySelectorAll("tbody tr").forEach((tr) => {
+        tr.addEventListener("click", () => {
+          selectedChartCode = tr.dataset.code;
+          renderChart();
+        });
+      });
     }
 
     renderMetricControls();
     renderStockListTable();
     renderTechnicalControls();
+    document.querySelectorAll("input[name='stockScreenMode']").forEach((input) => {
+      input.addEventListener("change", renderStockListTable);
+    });
     document.querySelectorAll("input[name='technicalScreenMode']").forEach((input) => {
       input.addEventListener("change", renderTechnicalTable);
+    });
+    document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartZigzag7, #chartZigzag20").forEach((input) => {
+      input.addEventListener("change", renderChart);
     });
     renderTechnicalTable();
     renderPriceDataTimestamp();

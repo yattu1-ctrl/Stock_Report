@@ -119,12 +119,20 @@ function zigzag(prices, depth) {
     trend = pivot.type === "low" ? "上昇中" : "下降中";
   }
 
+  const afterPivot = prices.slice(pivot.index);
+  const lowAfterPivot = Math.min(...afterPivot.map((row) => row.low).filter(Number.isFinite));
+  const highAfterPivot = Math.max(...afterPivot.map((row) => row.high).filter(Number.isFinite));
+  const upTurnPrice = Number.isFinite(lowAfterPivot) ? lowAfterPivot * 1.01 : null;
+  const downTurnPrice = Number.isFinite(highAfterPivot) ? highAfterPivot * 0.99 : null;
+
   return {
     type: pivot.type,
     date: pivot.date,
     value: pivot.value,
     change,
     trend,
+    upTurnPrice,
+    downTurnPrice,
   };
 }
 
@@ -194,11 +202,15 @@ function indicatorsFor(stock, prices) {
 
   for (const depth of [7, 20]) {
     const zz = zigzag(prices, depth);
+    const previousZz = prices.length > 1 ? zigzag(prices.slice(0, -1), depth) : null;
     output[`zigzag${depth}`] = zz?.trend ?? null;
+    output[`zigzag${depth}Changed`] = Boolean(zz?.trend && previousZz?.trend && zz.trend !== previousZz.trend);
     output[`zigzag${depth}Change`] = round(zz?.change);
     output[`zigzag${depth}Type`] = zz?.type ?? null;
     output[`zigzag${depth}Date`] = zz?.date ?? null;
     output[`zigzag${depth}Value`] = round(zz?.value);
+    output[`zigzag${depth}UpTurnPrice`] = round(zz?.upTurnPrice);
+    output[`zigzag${depth}DownTurnPrice`] = round(zz?.downTurnPrice);
   }
   return output;
 }
@@ -258,7 +270,13 @@ const browserRows = output.data.map((row) => ({
   macd: row.macd,
   rsi: row.rsi,
   zigzag7: row.zigzag7,
+  zigzag7Changed: row.zigzag7Changed,
+  zigzag7UpTurnPrice: row.zigzag7UpTurnPrice,
+  zigzag7DownTurnPrice: row.zigzag7DownTurnPrice,
   zigzag20: row.zigzag20,
+  zigzag20Changed: row.zigzag20Changed,
+  zigzag20UpTurnPrice: row.zigzag20UpTurnPrice,
+  zigzag20DownTurnPrice: row.zigzag20DownTurnPrice,
 }));
 fs.writeFileSync(jsPath, [
   `window.technicalFetchedAt = ${JSON.stringify(output.fetchedAt)};`,
