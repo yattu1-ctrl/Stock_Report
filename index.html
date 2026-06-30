@@ -867,6 +867,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="ai-analysis" data-tab="ai-analysis">AI分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="screening-test" data-tab="screening-test">スクリーニングテスト</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="screening-patterns" data-tab="screening-patterns">設定別分析</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="pattern-extraction" data-tab="pattern-extraction">パターン別抽出</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="nikkei-correlation" data-tab="nikkei-correlation">日経平均相関</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="sector-chart" data-tab="sector-chart">セクタ別</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
@@ -1515,6 +1516,23 @@
         <div class="grid" id="screeningPatternSummary"></div>
         <div class="table-scroll">
           <table id="screeningPatternTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </article>
+
+    <article class="panel" id="pattern-extraction">
+      <section class="block">
+        <h2>パターン別抽出</h2>
+        <p>日別最適化で使われた各パターンを、選択した算出日の終値データに適用し、抽出銘柄とその後の成績を確認します。</p>
+        <div class="chart-controls" aria-label="パターン別抽出の算出日">
+          <label>算出日<select id="patternExtractionLookback" aria-label="算出日を選択"></select></label>
+        </div>
+        <div class="grid" id="patternExtractionSummary"></div>
+        <div class="table-scroll">
+          <table id="patternExtractionTable">
             <thead></thead>
             <tbody></tbody>
           </table>
@@ -2686,12 +2704,19 @@
       const valid = evaluations.filter(Boolean);
       if (!valid.length) return null;
       const hitCount = valid.reduce((sum, result) => sum + result.count, 0);
+      const nikkeiReturns = valid.map((result) => {
+        const nikkeiStart = nikkeiRowAtLookback(result.startLookback);
+        const nikkeiEnd = nikkeiRowAtLookback(result.endLookback);
+        const value = percentChange(Number(nikkeiEnd?.currentPrice), Number(nikkeiStart?.currentPrice));
+        return Number.isFinite(value) ? value : null;
+      }).filter(Number.isFinite);
       return {
         testedPeriods: valid.length,
         hitCount,
         averageHitCount: hitCount / valid.length,
         averageWinRate: valid.reduce((sum, result) => sum + result.winRate, 0) / valid.length,
         averageReturn: valid.reduce((sum, result) => sum + result.averageReturn, 0) / valid.length,
+        averageNikkeiReturn: nikkeiReturns.length ? nikkeiReturns.reduce((sum, value) => sum + value, 0) / nikkeiReturns.length : null,
         positivePeriodRate: valid.filter((result) => result.averageReturn > 0).length / valid.length * 100
       };
     }
@@ -2830,6 +2855,7 @@
         ["averageHitCount", "平均ヒット銘柄数"],
         ["averageWinRate", "平均勝率"],
         ["averageReturn", "平均騰落率"],
+        ["averageNikkeiReturn", "日経平均騰落率"],
         ["positivePeriodRate", "プラス期間率"]
       ];
       table.querySelector("thead").innerHTML = `<tr>${columns.map(([key, label]) => {
@@ -2847,6 +2873,7 @@
           <td>${row.averageHitCount.toFixed(1)}銘柄</td>
           <td>${row.averageWinRate.toFixed(1)}%</td>
           <td>${colorNumber(row.averageReturn, `${row.averageReturn.toFixed(2)}%`)}</td>
+          <td>${row.averageNikkeiReturn == null ? "—" : colorNumber(row.averageNikkeiReturn, `${row.averageNikkeiReturn.toFixed(2)}%`)}</td>
           <td>${row.positivePeriodRate.toFixed(1)}%</td>
         </tr>`;
       }).join("");
@@ -2865,6 +2892,63 @@
     function screeningPatternSortValue(row, key) {
       if (key === "labels") return row.labels.join(" + ");
       return row[key];
+    }
+
+    function renderPatternExtractionControls() {
+      const select = document.getElementById("patternExtractionLookback");
+      if (!select) return;
+      select.innerHTML = Array.from({ length: 701 }, (_, days) => (
+        `<option value="${days}">${days === 0 ? "当日（最新終値）" : `${days}営業日前`}</option>`
+      )).join("");
+      select.addEventListener("change", renderPatternExtraction);
+    }
+
+    function renderPatternExtraction() {
+      const table = document.getElementById("patternExtractionTable");
+      const summary = document.getElementById("patternExtractionSummary");
+      const select = document.getElementById("patternExtractionLookback");
+      if (!table || !summary || !select) return;
+      const lookback = Number(select.value || 0);
+      const horizon = lookback >= 25 ? 25 : lookback;
+      const endLookback = lookback - horizon;
+      const startDate = nikkeiRowAtLookback(lookback)?.date || "—";
+      const endDate = nikkeiRowAtLookback(endLookback)?.date || "—";
+      const signalMap = new Map(aiSignalDefinitions);
+      const { patternResults } = getScreeningTestResults();
+      const rows = patternResults.map((pattern) => {
+        const combo = pattern.keys.map((key) => [key, signalMap.get(key) || key]);
+        const result = evaluateScreeningCombinationAtLookback(combo, lookback, horizon);
+        return {
+          pattern,
+          result,
+          stocks: result?.stocks || [],
+          count: result?.count || 0,
+          winRate: result?.winRate ?? null,
+          averageReturn: result?.averageReturn ?? null
+        };
+      }).sort((a, b) => (b.averageReturn ?? -Infinity) - (a.averageReturn ?? -Infinity) || b.count - a.count);
+      const activeRows = rows.filter((row) => row.count > 0);
+      const totalHits = activeRows.reduce((sum, row) => sum + row.count, 0);
+      const avgReturn = activeRows.length ? activeRows.reduce((sum, row) => sum + row.averageReturn, 0) / activeRows.length : null;
+      summary.innerHTML = [
+        `<div class="mini"><span class="tag">算出日</span><b>${lookback === 0 ? "当日" : `${lookback}営業日前`} / ${startDate}</b><p>${horizon >= 25 ? "25営業日後まで" : "最新終値まで"}の成績を表示します。</p></div>`,
+        `<div class="mini"><span class="tag warn">抽出</span><b>${activeRows.length}パターン / ${totalHits}銘柄</b><p>日別最適化で使われた固定パターンを算出日の終値データに適用。</p></div>`,
+        `<div class="mini"><span class="tag dark">平均騰落</span><b>${avgReturn == null ? "—" : colorNumber(avgReturn, `${avgReturn.toFixed(2)}%`)}</b><p>${startDate}から${endDate}までのパターン別平均です。</p></div>`
+      ].join("");
+      table.querySelector("thead").innerHTML = `<tr>
+        <th>パターン</th><th>スクリーニング設定</th><th>抽出銘柄数</th><th>勝率</th><th>平均騰落率</th><th>評価期間</th><th>抽出銘柄</th>
+      </tr>`;
+      table.querySelector("tbody").innerHTML = rows.map((row, index) => (
+        `<tr>
+          <td>パターン${index + 1}</td>
+          <td>${row.pattern.labels.join("<br>")}</td>
+          <td>${row.count}銘柄</td>
+          <td>${row.winRate == null ? "—" : `${row.winRate.toFixed(1)}%`}</td>
+          <td>${row.averageReturn == null ? "—" : colorNumber(row.averageReturn, `${row.averageReturn.toFixed(2)}%`)}</td>
+          <td>${startDate}〜${endDate}<br><span class="eyebrow" style="color: var(--muted);">${horizon >= 25 ? "25営業日" : `${horizon}営業日`}</span></td>
+          <td>${row.stocks.length ? row.stocks.map((stock) => `${stock.name} (${stock.code})`).join("<br>") : "該当なし"}</td>
+        </tr>`
+      )).join("");
     }
 
     function openScreeningStockPopup(startLookback) {
@@ -3596,6 +3680,8 @@
     renderNikkeiCorrelation();
     renderSectorChartControls();
     renderSectorChart();
+    renderPatternExtractionControls();
+    renderPatternExtraction();
     renderPriceDataTimestamp();
   </script>
 </body>
