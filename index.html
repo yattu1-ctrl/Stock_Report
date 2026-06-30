@@ -586,6 +586,10 @@
       white-space: nowrap;
     }
 
+    .portfolio-tech-cell {
+      white-space: nowrap;
+    }
+
     #technicalTable tbody tr {
       cursor: pointer;
     }
@@ -1689,6 +1693,51 @@
       return "—";
     }
 
+    function hydratePortfolioTechnicalColumns() {
+      const portfolio = document.getElementById("portfolio");
+      if (!portfolio) return;
+      const rowsByCode = new Map((window.technicalRows || []).map((row) => [String(row.code), row]));
+      portfolio.querySelectorAll("table").forEach((table) => {
+        const headers = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent.trim());
+        const codeIndex = headers.indexOf("コード");
+        if (codeIndex < 0 || table.dataset.portfolioTechnical === "done") return;
+        table.dataset.portfolioTechnical = "done";
+        const headerRow = table.querySelector("thead tr");
+        const newsIndex = headers.indexOf("ニュース");
+        const insertBeforeHeader = newsIndex >= 0 ? headerRow.children[newsIndex] : headerRow.lastElementChild;
+        [["ZigZag 7"], ["ZigZag 20"], ["チャート"]].forEach(([label]) => {
+          const th = document.createElement("th");
+          th.textContent = label;
+          headerRow.insertBefore(th, insertBeforeHeader);
+        });
+        table.querySelectorAll("tbody tr").forEach((tr) => {
+          const cells = Array.from(tr.children);
+          const code = cells[codeIndex]?.textContent.trim();
+          if (!code || code === "—") return;
+          const row = rowsByCode.get(code);
+          const insertBeforeCell = newsIndex >= 0 ? tr.children[newsIndex] : tr.lastElementChild;
+          const zigzag7 = document.createElement("td");
+          zigzag7.className = "portfolio-tech-cell";
+          zigzag7.innerHTML = trendBadge(row?.zigzag7);
+          const zigzag20 = document.createElement("td");
+          zigzag20.className = "portfolio-tech-cell";
+          zigzag20.innerHTML = trendBadge(row?.zigzag20);
+          const chart = document.createElement("td");
+          chart.className = "portfolio-tech-cell";
+          chart.innerHTML = `<button class="chart-open-button" type="button" data-code="${code}">開く</button>`;
+          tr.insertBefore(zigzag7, insertBeforeCell);
+          tr.insertBefore(zigzag20, insertBeforeCell);
+          tr.insertBefore(chart, insertBeforeCell);
+        });
+      });
+      portfolio.querySelectorAll(".chart-open-button").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openChartTab(button.dataset.code);
+        });
+      });
+    }
+
     function renderPriceDataTimestamp() {
       const target = document.getElementById("priceDataTimestamp");
       if (!target) return;
@@ -2136,6 +2185,7 @@
     renderStockListTable();
     renderTechnicalControls();
     renderTechnicalSectorFilter();
+    hydratePortfolioTechnicalColumns();
     document.querySelectorAll("input[name='stockScreenMode']").forEach((input) => {
       input.addEventListener("change", renderStockListTable);
     });
