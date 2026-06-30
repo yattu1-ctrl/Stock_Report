@@ -2030,7 +2030,16 @@
       const baseColumns = [
         ["name", "銘柄名"], ["code", "コード"], ["currentPrice", "現在株価"], ["sector", "セクタ"]
       ];
-      const activeColumns = baseColumns.concat(technicalColumns.filter(([key]) => checked.includes(key)));
+      const visibleKeys = new Set(checked);
+      if (visibleKeys.has("zigzag7")) {
+        visibleKeys.add("zigzag7UpTurnPrice");
+        visibleKeys.add("zigzag7DownTurnPrice");
+      }
+      if (visibleKeys.has("zigzag20")) {
+        visibleKeys.add("zigzag20UpTurnPrice");
+        visibleKeys.add("zigzag20DownTurnPrice");
+      }
+      const activeColumns = baseColumns.concat(technicalColumns.filter(([key]) => visibleKeys.has(key)));
       const filteredRows = activeFilters.length === 0 ? rows : rows.filter((row) => {
         const results = activeFilters.map(({ key, filter }) => matchesTechnicalFilter(row, key, filter));
         return screenMode === "or" ? results.some(Boolean) : results.every(Boolean);
