@@ -9,6 +9,7 @@ const csvPath = path.join(outDir, "price-history-200d.csv");
 const jsPath = path.join(outDir, "price-history-200d.js");
 const requestedDailyRows = 1000;
 const requestedMonthlyMonths = 360;
+const scheduledFetchTime = "平日 15:30";
 
 const html = fs.readFileSync(htmlPath, "utf8");
 const stockRowsBlock = html.match(/const stockRows = \[([\s\S]*?)\]\.map/);
@@ -119,6 +120,7 @@ const jsonOutput = {
   fetchedAt,
   requestedDays: requestedDailyRows,
   requestedMonths: requestedMonthlyMonths,
+  scheduledFetchTime,
   stocks: uniqueStocks.length,
   successful: successful.length,
   failed: failed.map((result) => ({
@@ -182,6 +184,7 @@ const browserMonthlyRows = Object.fromEntries(jsonOutput.data.map((stock) => [
 ]));
 fs.writeFileSync(jsPath, [
   `window.priceHistoryFetchedAt = ${JSON.stringify(jsonOutput.fetchedAt)};`,
+  `window.priceHistoryScheduledFetchTime = ${JSON.stringify(jsonOutput.scheduledFetchTime)};`,
   `window.priceHistoryRows = ${JSON.stringify(browserDailyRows)};`,
   `window.priceHistoryMonthlyRows = ${JSON.stringify(browserMonthlyRows)};`,
   "",

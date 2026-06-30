@@ -1745,7 +1745,8 @@
       if (!raw) return;
       const date = new Date(raw);
       if (Number.isNaN(date.getTime())) return;
-      target.textContent = `株価データ取得: ${date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}`;
+      const schedule = window.priceHistoryScheduledFetchTime || "平日 15:30";
+      target.textContent = `株価データ取得: ${date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })} / 更新予定: ${schedule}`;
     }
 
     function getStockValue(row, key) {
@@ -2028,8 +2029,11 @@
         return;
       }
       const period = document.querySelector("input[name='chartPeriod']:checked")?.value || "daily";
-      const data = aggregateHistory(rows, period).slice(-160);
+      const fullData = aggregateHistory(rows, period);
+      const data = fullData.slice(-160);
+      const visibleStart = Math.max(0, fullData.length - data.length);
       const closes = data.map((row) => row.c);
+      const fullCloses = fullData.map((row) => row.c);
       const selectedMas = Array.from(document.querySelectorAll(".chart-ma:checked")).map((input) => Number(input.value));
       const showRsi = document.getElementById("chartRsi")?.checked;
       const showMacd = document.getElementById("chartMacd")?.checked;
@@ -2045,7 +2049,10 @@
       const panels = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
       const height = top + mainHeight + (panels - 1) * subHeight + 34;
       const x = (index) => left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
-      const maSeries = Object.fromEntries(selectedMas.map((span) => [span, movingAverage(closes, span)]));
+      const maSeries = Object.fromEntries(selectedMas.map((span) => [
+        span,
+        movingAverage(fullCloses, span).slice(visibleStart)
+      ]));
       const priceValues = data.flatMap((row) => [row.h, row.l]).concat(Object.values(maSeries).flat().filter(Number.isFinite));
       const minPrice = Math.min(...priceValues);
       const maxPrice = Math.max(...priceValues);

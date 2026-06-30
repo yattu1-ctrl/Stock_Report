@@ -258,6 +258,41 @@
       return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
     }
 
+    function addCrosshair(svg, config) {
+      const ns = "http://www.w3.org/2000/svg";
+      const { data, width, top, left, right, mainHeight, chartWidth, maxPrice, minPrice, pad } = config;
+      const priceRange = maxPrice - minPrice + pad * 2;
+      const yToPrice = (value) => maxPrice + pad - ((value - top) * priceRange / mainHeight);
+
+      svg.addEventListener("click", (event) => {
+        const point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        const cursor = point.matrixTransform(svg.getScreenCTM().inverse());
+        if (cursor.x < left || cursor.x > width - right || cursor.y < top || cursor.y > top + mainHeight) return;
+
+        const index = Math.max(0, Math.min(data.length - 1, Math.round((cursor.x - left) / chartWidth * (data.length - 1))));
+        const crossX = left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
+        const crossY = cursor.y;
+        const price = yToPrice(crossY);
+        const row = data[index];
+        const label = `${row.d} / ${Math.round(price).toLocaleString("ja-JP")}円`;
+        const textX = crossX > width - 260 ? crossX - 196 : crossX + 12;
+        const textY = crossY < top + 28 ? crossY + 24 : crossY - 10;
+
+        svg.querySelector("#crosshair")?.remove();
+        const group = document.createElementNS(ns, "g");
+        group.setAttribute("id", "crosshair");
+        group.innerHTML = `
+          <line x1="${crossX.toFixed(1)}" y1="${top}" x2="${crossX.toFixed(1)}" y2="${top + mainHeight}" stroke="#334155" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="${left}" y1="${crossY.toFixed(1)}" x2="${width - right}" y2="${crossY.toFixed(1)}" stroke="#334155" stroke-width="1" stroke-dasharray="4 4"/>
+          <rect x="${textX - 6}" y="${textY - 17}" width="188" height="24" rx="5" fill="#ffffff" stroke="#334155" opacity=".95"/>
+          <text x="${textX}" y="${textY}" fill="#18211f" font-size="12" font-weight="800">${label}</text>
+        `;
+        svg.appendChild(group);
+      });
+    }
+
     function populateStocks() {
       const rows = window.technicalRows || [];
       select.innerHTML = rows.map((row) => (
@@ -282,8 +317,11 @@
         ? window.priceHistoryMonthlyRows[selectedCode]
         : rows;
       const limit = period === "daily" ? 260 : period === "weekly" ? 200 : 360;
-      const data = (period === "monthly" ? sourceRows : aggregateHistory(sourceRows, period)).slice(-limit);
+      const fullData = period === "monthly" ? sourceRows : aggregateHistory(sourceRows, period);
+      const data = fullData.slice(-limit);
+      const visibleStart = Math.max(0, fullData.length - data.length);
       const closes = data.map((row) => row.c);
+      const fullCloses = fullData.map((row) => row.c);
       const selectedMas = Array.from(document.querySelectorAll(".chart-ma:checked")).map((input) => Number(input.value));
       const showRsi = document.getElementById("chartRsi").checked;
       const showMacd = document.getElementById("chartMacd").checked;
@@ -291,15 +329,21 @@
       const showZigzag20 = document.getElementById("chartZigzag20").checked;
       const width = 1780;
       const mainHeight = 500;
+      const volumeHeight = 110;
       const subHeight = 130;
       const top = 26;
       const left = 68;
       const right = 34;
       const chartWidth = width - left - right;
       const panels = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
-      const height = top + mainHeight + 60 + (panels - 1) * subHeight;
+      const volumeTop = top + mainHeight + 34;
+      const dateLabelY = volumeTop + volumeHeight + 28;
+      const height = dateLabelY + 28 + (panels - 1) * subHeight;
       const x = (index) => left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
-      const maSeries = Object.fromEntries(selectedMas.map((span) => [span, movingAverage(closes, span)]));
+      const maSeries = Object.fromEntries(selectedMas.map((span) => [
+        span,
+        movingAverage(fullCloses, span).slice(visibleStart)
+      ]));
       const priceValues = data.flatMap((row) => [row.h, row.l]).concat(Object.values(maSeries).flat().filter(Number.isFinite));
       const minPrice = Math.min(...priceValues);
       const maxPrice = Math.max(...priceValues);
@@ -330,12 +374,12 @@
         if (!isBoundary) return "";
         const label = period === "monthly" ? current.slice(0, 4) : current.slice(5, 7);
         const xx = x(index);
-        return `<line x1="${xx.toFixed(1)}" y1="${top}" x2="${xx.toFixed(1)}" y2="${top + mainHeight}" stroke="#d9e1dd" stroke-dasharray="3 5"/><text x="${(xx + 4).toFixed(1)}" y="${top + mainHeight + 18}" fill="#63716d" font-size="11">${label}</text>`;
+        return `<line x1="${xx.toFixed(1)}" y1="${top}" x2="${xx.toFixed(1)}" y2="${volumeTop + volumeHeight}" stroke="#d9e1dd" stroke-dasharray="3 5"/><text x="${(xx + 4).toFixed(1)}" y="${dateLabelY - 14}" fill="#63716d" font-size="11">${label}</text>`;
       }).join("");
       const dateLabels = [0, .25, .5, .75, 1].map((ratio) => {
         const index = Math.min(data.length - 1, Math.round((data.length - 1) * ratio));
         const label = period === "monthly" ? data[index].d.slice(0, 7) : data[index].d.slice(5);
-        return `<text x="${x(index).toFixed(1)}" y="${top + mainHeight + 34}" fill="#334155" font-size="12" text-anchor="middle">${label}</text>`;
+        return `<text x="${x(index).toFixed(1)}" y="${dateLabelY}" fill="#334155" font-size="12" text-anchor="middle">${label}</text>`;
       }).join("");
       const grid = [0, .25, .5, .75, 1].map((ratio) => {
         const y = top + ratio * mainHeight;
@@ -352,8 +396,18 @@
         if (points.length < 2) return "";
         return `<path d="${svgPath(points)}" fill="none" stroke="${color}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
       };
+      const volumeMax = Math.max(...data.map((row) => row.v || 0), 1);
+      const volumeWidth = Math.max(2, Math.min(10, chartWidth / data.length * .58));
+      const volumeBars = data.map((row, index) => {
+        const value = row.v || 0;
+        const barHeight = Math.max(1, value / volumeMax * (volumeHeight - 18));
+        const cx = x(index);
+        const color = row.c >= row.o ? "#2563eb" : "#dc2626";
+        return `<rect x="${(cx - volumeWidth / 2).toFixed(1)}" y="${(volumeTop + volumeHeight - barHeight).toFixed(1)}" width="${volumeWidth.toFixed(1)}" height="${barHeight.toFixed(1)}" fill="${color}" opacity=".38"/>`;
+      }).join("");
+      const volumePanel = `<text x="${left}" y="${volumeTop - 8}" fill="#334155" font-size="13" font-weight="800">出来高</text><line x1="${left}" y1="${volumeTop + volumeHeight}" x2="${width - right}" y2="${volumeTop + volumeHeight}" stroke="#d9e1dd"/>${volumeBars}<text x="10" y="${volumeTop + 12}" fill="#63716d" font-size="11">${Math.round(volumeMax).toLocaleString("ja-JP")}</text>`;
       let subPanels = "";
-      let panelTop = top + mainHeight + 58;
+      let panelTop = dateLabelY + 28;
       if (showRsi) {
         const rsi = rsiValues(closes);
         const yRsi = (value) => panelTop + (100 - value) * (subHeight - 30) / 100;
@@ -390,11 +444,17 @@
         ${maLines}
         ${showZigzag7 ? zigzagLine(7, "#2563eb") : ""}
         ${showZigzag20 ? zigzagLine(20, "#b45309") : ""}
+        ${volumePanel}
         ${dateLabels}
         ${subPanels}
       </svg>`;
       const fetched = window.priceHistoryFetchedAt ? new Date(window.priceHistoryFetchedAt).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) : "—";
-      meta.textContent = `株価データ取得: ${fetched} / 終値: ${closes.at(-1).toLocaleString("ja-JP")}円`;
+      const schedule = window.priceHistoryScheduledFetchTime || "平日 15:30";
+      meta.textContent = `株価データ取得: ${fetched} / 更新予定: ${schedule} / 終値: ${closes.at(-1).toLocaleString("ja-JP")}円`;
+      const svg = stage.querySelector("svg");
+      if (svg) {
+        addCrosshair(svg, { data, width, top, left, right, mainHeight, chartWidth, maxPrice, minPrice, pad });
+      }
     }
 
     populateStocks();
