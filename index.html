@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>国内株式テーマレポート | データセンター・半導体</title>
+  <style>
+    :root {
+      --bg: #f4f7f5;
+      --surface: #ffffff;
+      --ink: #18211f;
+      --muted: #63716d;
+      --line: #d9e1dd;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --accent-3: #334155;
+      --soft: #e7f4f1;
+      --warn: #fff4df;
+      --good: #e9f7ed;
+      --shadow: 0 18px 50px rgba(24, 33, 31, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+      line-height: 1.72;
+    }
+
+    a { color: var(--accent); }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    header {
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, .93), rgba(24, 33, 31, .88)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='520' viewBox='0 0 1200 520'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13'%3E%3Cpath d='M0 86h1200M0 185h1200M0 284h1200M0 383h1200M114 0v520M246 0v520M378 0v520M510 0v520M642 0v520M774 0v520M906 0v520M1038 0v520'/%3E%3Ccircle cx='246' cy='185' r='34'/%3E%3Ccircle cx='774' cy='284' r='44'/%3E%3Cpath d='M246 185h528M774 284l132 99M510 86l132 99M378 383h528'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: cover;
+      color: #fff;
+      padding: 46px 0 34px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .6fr);
+      gap: 28px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 780px;
+      margin: 18px 0 0;
+      color: rgba(255,255,255,.88);
+      font-size: 16px;
+    }
+
+    .status-panel {
+      background: rgba(255,255,255,.13);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 8px;
+      padding: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .status-panel strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    .status-panel span {
+      color: rgba(255,255,255,.82);
+      font-size: 13px;
+    }
+
+    .tabs-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(244, 247, 245, .92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px 0;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--accent-3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      min-height: 42px;
+      font: inherit;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    main { padding: 30px 0 56px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    section.block {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    h2, h3 {
+      margin: 0 0 14px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    h2 { font-size: 25px; }
+    h3 { font-size: 18px; margin-top: 12px; }
+
+    p { margin: 0 0 14px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfdfc;
+    }
+
+    .mini b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 3px 10px;
+      background: var(--soft);
+      color: #075e57;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag.warn {
+      background: var(--warn);
+      color: #92400e;
+    }
+
+    .tag.dark {
+      background: #e8edf2;
+      color: #334155;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 14px 0;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      background: var(--surface);
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #edf3f0;
+      color: #263330;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    td.code { width: 78px; font-weight: 800; color: var(--accent-3); }
+
+    .priority-high { color: #b91c1c; font-weight: 800; }
+    .priority-mid { color: #b45309; font-weight: 800; }
+    .priority-watch { color: #334155; font-weight: 800; }
+
+    .callout {
+      border-left: 5px solid var(--accent);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 16px 0;
+    }
+
+    .callout.warn {
+      border-left-color: var(--accent-2);
+      background: var(--warn);
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checks li {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      padding: 14px 14px 14px 42px;
+      position: relative;
+    }
+
+    .checks li::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 18px;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 20px;
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 22px 0 34px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .hero, .grid, .checks, .source-list {
+        grid-template-columns: 1fr;
+      }
+
+      header { padding-top: 34px; }
+      section.block { padding: 18px; }
+      .shell { width: min(100% - 22px, 1180px); }
+      th, td { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell hero">
+      <div>
+        <p class="eyebrow">国内株式テーマレポート / 2026年6月末時点</p>
+        <h1>データセンター・半導体 投資判断ツール</h1>
+        <p class="lead">AI需要を起点に、データセンター建設、冷却、電力、光通信、半導体製造装置、材料、後工程までを横断して整理したレポートです。</p>
+      </div>
+      <aside class="status-panel" aria-label="現在の市況認識">
+        <strong>上昇サイクル本格化</strong>
+        <span>半導体全体は在庫調整を通過。AI・データセンター・メモリは需給逼迫に近く、汎用品は回復途上の銘柄差が残ります。</span>
+      </aside>
+    </div>
+  </header>
+
+  <div class="tabs-wrap">
+    <nav class="shell tabs" aria-label="レポートタブ">
+      <button class="tab" type="button" aria-selected="true" aria-controls="overview" data-tab="overview">全体像</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="cycle" data-tab="cycle">半導体サイクル</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="datacenter" data-tab="datacenter">データセンター関連</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="semiconductor" data-tab="semiconductor">半導体関連</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="candidates" data-tab="candidates">候補銘柄</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="decision" data-tab="decision">判断チェック</button>
+    </nav>
+  </div>
+
+  <main class="shell">
+    <article class="panel active" id="overview">
+      <section class="block">
+        <h2>テーマの見取り図</h2>
+        <p>2026年6月末時点では、半導体の在庫循環は「調整終了後の回復初期」ではなく、AI・メモリ主導の上昇サイクル本格化から一部過熱に近い段階です。</p>
+        <div class="grid">
+          <div class="mini">
+            <span class="tag">直接恩恵</span>
+            <b>データセンター運営・クラウド</b>
+            <p>さくら、KDDI、ソフトバンク、NTT、NTTデータ、IIJなど。売上に直接反映されやすい一方、設備投資負担も確認が必要です。</p>
+          </div>
+          <div class="mini">
+            <span class="tag warn">設備投資恩恵</span>
+            <b>建設・空調・電力・ケーブル</b>
+            <p>大林組、高砂熱学、三菱電機、富士電機、明電舎、古河電工、住友電工、SWCCなど。周辺需要として見直し余地を探しやすい領域です。</p>
+          </div>
+          <div class="mini">
+            <span class="tag dark">上流恩恵</span>
+            <b>製造装置・検査・材料・後工程</b>
+            <p>東京エレクトロン、ディスコ、アドバンテスト、イビデン、トリケミカルなど。テーマ純度は高いものの、株価への織り込みも早い領域です。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>今の結論</h2>
+        <div class="callout">
+          <p><b>押し目買いを狙う局面では、テーマ性だけでは不十分です。</b> 在庫日数、受注残、価格、設備投資、株価の織り込み度をセットで確認する必要があります。</p>
+        </div>
+        <p>特にAIサーバー向けGPU、HBM、DRAM、NAND、先端ロジックは強い一方、車載・産業用・民生向けなど一部の汎用半導体は回復途上または正常化段階です。</p>
+      </section>
+    </article>
+
+    <article class="panel" id="cycle">
+      <section class="block">
+        <h2>半導体在庫循環の現在地</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>フェーズ</th><th>状態</th><th>現在の該当度</th></tr></thead>
+            <tbody>
+              <tr><td>1. 在庫積み上がり</td><td>需要減速、在庫過多、価格下落</td><td>すでに通過</td></tr>
+              <tr><td>2. 在庫調整</td><td>生産調整、顧客在庫の圧縮</td><td>2023〜2024年中心</td></tr>
+              <tr><td>3. 底打ち・回復初期</td><td>出荷回復、在庫正常化</td><td>2024〜2025年</td></tr>
+              <tr><td>4. 補充・上昇局面</td><td>受注増、価格上昇、設備投資再開</td><td><b>現在の中心</b></td></tr>
+              <tr><td>5. 需給逼迫・過熱</td><td>品薄、価格急騰、増産投資拡大</td><td><b>AI・メモリはここに近い</b></td></tr>
+              <tr><td>6. 次の在庫積み上がり</td><td>供給過剰、価格下落の兆し</td><td>まだ明確ではない</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>分野別のサイクル位置</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>分野</th><th>現在のサイクル位置</th></tr></thead>
+            <tbody>
+              <tr><td>HBM・DRAM・NAND</td><td>需給逼迫、価格上昇局面</td></tr>
+              <tr><td>AI GPU・先端ロジック</td><td>強い需要継続、供給制約あり</td></tr>
+              <tr><td>半導体製造装置</td><td>受注回復〜設備投資拡大局面</td></tr>
+              <tr><td>先端パッケージ基板</td><td>上昇局面</td></tr>
+              <tr><td>汎用ロジック・アナログ</td><td>回復途上、銘柄差あり</td></tr>
+              <tr><td>車載・産業用半導体</td><td>分野によってはまだ在庫正常化段階</td></tr>
+              <tr><td>民生・低価格メモリ</td><td>AI向けへの供給シフトで品薄感あり</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <p>主力半導体株は好材料を先取りしやすいため、「市況が良いか」よりも「次の上方修正・受注増・利益率改善が残っているか」を見る局面です。</p>
+        </div>
+      </section>
+    </article>
+
+    <article class="panel" id="datacenter">
+      <section class="block">
+        <h2>データセンター需要関連銘柄</h2>
+        <p>AI需要は「建てる」「冷やす」「電力を送る」「つなぐ」「演算する」の全領域に波及します。</p>
+        <h3>1. 運営・クラウド・AIインフラ</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>コード</th><th>ジャンル</th><th>見るポイント</th></tr></thead>
+            <tbody>
+              <tr><td>さくらインターネット</td><td class="code">3778</td><td>国産クラウド・GPUクラウド</td><td>石狩DC、生成AI向けGPUクラウド。国産AIインフラの本命候補。</td></tr>
+              <tr><td>NTT</td><td class="code">9432</td><td>通信・DC基盤</td><td>通信網、DC、法人ITを保有。国内外DC需要の中核候補。</td></tr>
+              <tr><td>NTTデータグループ</td><td class="code">9613</td><td>グローバルDC・ITサービス</td><td>AIインフラ拡大と脱炭素対応を進める大手DC運営候補。</td></tr>
+              <tr><td>KDDI</td><td class="code">9433</td><td>通信・AIデータセンター</td><td>大阪堺データセンターなど、生成AI・医療ビッグデータ活用を想定。</td></tr>
+              <tr><td>ソフトバンク</td><td class="code">9434</td><td>AIデータセンター・生成AI</td><td>シャープ堺工場跡地を活用したAIデータセンター計画。</td></tr>
+              <tr><td>IIJ</td><td class="code">3774</td><td>クラウド・DC運営</td><td>大規模DCと高効率空調の事例があり、法人クラウド需要と連動。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>2. 建設・空調・電力・通信インフラ</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>領域</th><th>主な銘柄</th><th>見るポイント</th></tr></thead>
+            <tbody>
+              <tr><td>建設・都市型DC</td><td>大林組、鹿島、大成建設、清水建設、大和ハウス、東急建設</td><td>ハイパースケールDC、都市型DC、産業施設開発の受け皿。</td></tr>
+              <tr><td>空調・冷却</td><td>ダイキン、高砂熱学、新日本空調、三機工業、大氣社、日比谷総合設備、三菱重工</td><td>AIデータセンターでは冷却効率が運用コストを左右。</td></tr>
+              <tr><td>電源・受配電</td><td>三菱電機、富士電機、明電舎、日立、GSユアサ、SWCC、関西電力、九州電力、J-POWER</td><td>受変電、UPS、非常用電源、蓄電池、大口電力需要が焦点。</td></tr>
+              <tr><td>光通信・ネットワーク</td><td>古河電工、住友電工、フジクラ、NEC、アンリツ、大井電気、NTT</td><td>DC内・DC間の高速通信、光ファイバー、海底ケーブル、光伝送。</td></tr>
+              <tr><td>不動産・用地・投資</td><td>三井不動産、三菱地所、東急、三井物産、東京センチュリー、オリックス</td><td>土地、電力接続、冷却、水、通信網がそろう立地の価値。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </article>
+
+    <article class="panel" id="semiconductor">
+      <section class="block">
+        <h2>半導体関連銘柄</h2>
+        <p>半導体関連は、製造装置・検査・材料・後工程・メーカー・周辺設備で値動きの性格が違います。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>分類</th><th>主な銘柄</th><th>値動き・確認ポイント</th></tr></thead>
+            <tbody>
+              <tr><td>半導体製造装置</td><td>東京エレクトロン、ディスコ、SCREEN、KOKUSAI、ローツェ、東京精密、芝浦メカトロニクス、タツモ、野村マイクロ、ダイフク</td><td>設備投資サイクルと受注残に敏感。株価は業績より先に動きやすい。</td></tr>
+              <tr><td>検査・テスター・計測</td><td>アドバンテスト、レーザーテック、日本電子材料、東京精密、HORIBA、日置電機、インターアクション</td><td>AI半導体・HBM・EUVなどの先端需要に連動しやすい。</td></tr>
+              <tr><td>材料・ウェハ・薬液・ガス</td><td>信越化学、SUMCO、東京応化、トリケミカル、レゾナック、富士フイルム、ADEKA、ステラケミファ、関東電化、日本酸素、住友ベークライト、日東電工</td><td>価格、稼働率、先端材料の採用状況を見る。</td></tr>
+              <tr><td>後工程・パッケージ・基板</td><td>イビデン、新光電気工業、TOWA、アオイ電子、ヤマハ発動機、JUKI</td><td>AI GPU、HBM、先端パッケージ化で重要度が上昇。</td></tr>
+              <tr><td>半導体メーカー・ファブレス</td><td>ルネサス、ローム、ソシオネクスト、キオクシア、ソニー、サンケン電気、新電元、ミネベアミツミ、メガチップス、マクニカ</td><td>メモリ、車載、パワー、SoCなど分野ごとのサイクル差が大きい。</td></tr>
+              <tr><td>工場・周辺インフラ</td><td>オルガノ、野村マイクロ、ダイダン、高砂熱学、新日本空調、三機工業、大成建設、鹿島、大林組、清水建設</td><td>半導体工場建設、クリーンルーム、超純水、空調需要を取る領域。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </article>
+
+    <article class="panel" id="candidates">
+      <section class="block">
+        <h2>未織り込み余地を探しやすい候補</h2>
+        <p>主力半導体株よりも、半導体工場・AIデータセンターの周辺需要にいる銘柄のほうが、見直し余地を探しやすい整理です。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>優先度</th><th>銘柄</th><th>コード</th><th>ジャンル</th><th>見方</th></tr></thead>
+            <tbody>
+              <tr><td class="priority-high">高</td><td>ダイダン</td><td class="code">1980</td><td>空調・衛生・産業施設工事</td><td>半導体工場・データセンター設備投資に乗る銘柄。受注増が翌期以降に進捗する点がポイント。</td></tr>
+              <tr><td class="priority-high">高</td><td>明電舎</td><td class="code">6508</td><td>変圧器・電力インフラ</td><td>データセンター建設による電力需要増が背景。変圧器など受配電需要のテーマ性。</td></tr>
+              <tr><td class="priority-high">高</td><td>SWCC</td><td class="code">5805</td><td>電線・光ファイバー・電力ケーブル</td><td>電力ケーブル、光ファイバー、半導体向け部材の複合テーマ。専業ではないため認識が遅れる可能性。</td></tr>
+              <tr><td class="priority-mid">中〜高</td><td>日本電子材料</td><td class="code">6855</td><td>プローブカード</td><td>HBMなど先端半導体需要の恩恵を受ける検査部品銘柄。小型寄りで値動きは荒い。</td></tr>
+              <tr><td class="priority-mid">中〜高</td><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>次世代半導体向け材料と台湾子会社の出荷増がテーマ。中国市場や原材料費には注意。</td></tr>
+              <tr><td class="priority-mid">中</td><td>住友電工</td><td class="code">5802</td><td>光ファイバー・DC通信部材</td><td>大型株で分散度が高く、爆発力より安定寄り。DC向け通信部材の切り口。</td></tr>
+              <tr><td class="priority-mid">中</td><td>芝浦メカトロニクス</td><td class="code">6590</td><td>先端パッケージ装置</td><td>生成AI用GPU需要で、後工程・先端パッケージ向け装置が焦点。</td></tr>
+              <tr><td class="priority-watch">押し目監視</td><td>オルガノ</td><td class="code">6368</td><td>超純水・半導体工場インフラ</td><td>先端半導体向け超純水・薬液精製の本命級。市場認知が進んでおり織り込み度確認が必要。</td></tr>
+              <tr><td class="priority-watch">押し目監視</td><td>野村マイクロ・サイエンス</td><td class="code">6254</td><td>超純水装置</td><td>半導体工場向け超純水の代表銘柄。株価変動が大きい。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>逆に未織り込みとは言いにくい銘柄</h2>
+        <p>アドバンテスト、ディスコ、東京エレクトロン、レーザーテック、イビデン、フジクラなどは、AI・半導体相場の中心として買われやすい銘柄です。ここからは「好材料が未織り込み」ではなく、さらなる上方修正・受注増・利益率改善が出るかを見る局面です。</p>
+      </section>
+    </article>
+
+    <article class="panel" id="fundamental">
+      <section class="block">
+        <h2>ファンダメンタル分析の読み方</h2>
+        <p>重要なのは、単に「売上が伸びているか」ではなく、その成長が持続するか、利益につながるか、株価に織り込まれているかです。</p>
+        <div class="callout">
+          <p><b>見るべき核心:</b> 業績が良いかではなく、今後も伸びるか、市場予想を超えるか、株価がまだ織り込んでいないかを確認します。</p>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>実務で見る順番</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>順番</th><th>見るもの</th><th>読み方</th></tr></thead>
+            <tbody>
+              <tr><td class="code">1</td><td>売上・営業利益</td><td>3〜5年で伸びているか。一時的な特需か、継続需要かを分けます。</td></tr>
+              <tr><td class="code">2</td><td>利益率</td><td>増収と同時に営業利益率・粗利率が改善しているかを見ます。</td></tr>
+              <tr><td class="code">3</td><td>受注高・受注残</td><td>将来売上の見込みを確認します。装置、建設、空調、電力設備で特に重要です。</td></tr>
+              <tr><td class="code">4</td><td>在庫</td><td>棚卸資産、在庫回転率、在庫日数、顧客在庫を確認します。半導体では減速サインになりやすいです。</td></tr>
+              <tr><td class="code">5</td><td>キャッシュフロー</td><td>営業CF、投資CF、フリーCFを見て、利益が現金として残っているかを確認します。</td></tr>
+              <tr><td class="code">6</td><td>財務安全性</td><td>自己資本比率、有利子負債、ネットキャッシュ、流動比率で市況悪化への耐性を見ます。</td></tr>
+              <tr><td class="code">7</td><td>競争優位性</td><td>技術力、シェア、顧客基盤、参入障壁、価格決定力を確認します。</td></tr>
+              <tr><td class="code">8</td><td>市場成長性</td><td>TAM、市場成長率、需要の持続性、海外展開余地を見ます。</td></tr>
+              <tr><td class="code">9</td><td>上方修正余地</td><td>会社計画、コンセンサス、進捗率、来期見通しから市場予想を超えられるかを見ます。</td></tr>
+              <tr><td class="code">10</td><td>織り込み度</td><td>株価位置、PERの過去比較、出来高、決算反応、信用買い残を確認します。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>主要指標の読み方</h2>
+        <div class="grid">
+          <div class="mini">
+            <span class="tag">成長</span>
+            <b>売上成長</b>
+            <p>売上高の推移、増収率、数量と単価、セグメント別売上を確認。AI、データセンター、車載、産業向けなど伸びている需要の中身が重要です。</p>
+          </div>
+          <div class="mini">
+            <span class="tag">収益性</span>
+            <b>利益率</b>
+            <p>営業利益率、粗利率、経常利益率、純利益率を見る。売上増でも利益率が下がる場合は価格競争や先行投資負担を疑います。</p>
+          </div>
+          <div class="mini">
+            <span class="tag">先行指標</span>
+            <b>受注残・在庫</b>
+            <p>受注残は将来売上、在庫は次の減速サイン。増収と同時に在庫が急増していないかを必ず見ます。</p>
+          </div>
+          <div class="mini">
+            <span class="tag warn">安全性</span>
+            <b>CF・財務</b>
+            <p>営業CFとフリーCF、自己資本比率、有利子負債、流動比率を確認。成長投資か資金繰り悪化かを分けます。</p>
+          </div>
+          <div class="mini">
+            <span class="tag dark">効率</span>
+            <b>ROE・ROIC</b>
+            <p>ROE、ROA、ROICで資本効率を確認。特にROICが資本コストを上回るかが重要です。</p>
+          </div>
+          <div class="mini">
+            <span class="tag dark">価格</span>
+            <b>バリュエーション</b>
+            <p>PER、PBR、EV/EBITDA、PEG、配当利回りを確認。成長率が鈍化するとPERが切り下がるリスクがあります。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>半導体・データセンターで特に効く視点</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>視点</th><th>理由</th><th>見る対象</th></tr></thead>
+            <tbody>
+              <tr><td>在庫循環</td><td>半導体株は在庫サイクルに大きく左右されるため。</td><td>棚卸資産、在庫日数、顧客在庫、メモリ市況</td></tr>
+              <tr><td>受注残</td><td>装置・設備・建設系の将来売上を見るため。</td><td>製造装置、空調、電力設備、超純水、建設</td></tr>
+              <tr><td>価格</td><td>DRAM、NAND、HBMの価格は利益率と上方修正余地に直結しやすい。</td><td>メモリ、検査装置、後工程、材料</td></tr>
+              <tr><td>設備投資計画</td><td>TSMC、Samsung、SK hynix、Micronなどの投資動向が国内関連株に波及します。</td><td>製造装置、材料、工場インフラ、電力</td></tr>
+              <tr><td>AI需要</td><td>GPU、HBM、先端パッケージ、光通信、データセンター電力需要に影響します。</td><td>検査、基板、光ファイバー、冷却、受配電</td></tr>
+              <tr><td>外部環境</td><td>為替、米国ハイテク株、中国規制、金利、原材料価格で評価が変わります。</td><td>輸出企業、装置・材料、成長株、建設・設備</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>最後に見るべき織り込み度</h2>
+        <p>良い会社でも、すでに株価が大きく上がっていれば好材料は織り込み済みかもしれません。特に、好決算でも株価が上がらない場合は、市場がすでに強い業績を想定していた可能性があります。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>確認項目</th><th>読み方</th></tr></thead>
+            <tbody>
+              <tr><td>株価位置</td><td>年初来高値圏か、出遅れか。急騰後は材料出尽くしに注意します。</td></tr>
+              <tr><td>PERの過去比較</td><td>過去平均より高すぎないか。成長率と合わせて見ます。</td></tr>
+              <tr><td>信用買い残・出来高</td><td>個人投資家が入りすぎていないか、人気化が進みすぎていないかを確認します。</td></tr>
+              <tr><td>決算反応</td><td>好決算で上がるか、売られるか。市場期待との差が出やすいポイントです。</td></tr>
+              <tr><td>アナリスト予想</td><td>強気予想が多すぎる場合、上振れ余地が小さくなることがあります。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </article>
+
+    <article class="panel" id="overheat">
+      <section class="block">
+        <h2>買われすぎ・売られすぎの読み方</h2>
+        <p>買われすぎ・売られすぎを見るときは、単にRSIが高い、低いだけで判断しません。価格、出来高、移動平均線、信用残、需給、材料、業績期待を組み合わせて確認します。</p>
+        <div class="callout">
+          <p><b>基本姿勢:</b> 買われすぎ・売られすぎは逆張りのサインではなく注意信号です。最終的には「テクニカルの過熱感 × ファンダメンタルの変化 × 需給」で判断します。</p>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>実務で見る順番</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>順番</th><th>見るもの</th><th>読み方</th></tr></thead>
+            <tbody>
+              <tr><td class="code">1</td><td>短期騰落率</td><td>5営業日で+20％、1か月で+50％なら短期過熱。5営業日で-20％、1か月で-40％なら売られすぎ候補です。</td></tr>
+              <tr><td class="code">2</td><td>RSI</td><td>70以上は買われすぎ圏、80以上は強い過熱。30以下は売られすぎ圏、20以下は強い売られすぎです。</td></tr>
+              <tr><td class="code">3</td><td>25日線との乖離率</td><td>+10％でやや過熱、+20％で強い過熱。-10％で売られすぎ候補、-20％で強い売られすぎ候補です。</td></tr>
+              <tr><td class="code">4</td><td>出来高</td><td>急騰・急落に出来高が伴うかを確認。好材料後の大商いは材料出尽くし、悪材料後の大商いは投げ売り一巡の候補です。</td></tr>
+              <tr><td class="code">5</td><td>信用買い残・空売り残</td><td>信用買い残の急増は将来の売り圧力。空売り残の増加は買い戻し余地になることがあります。</td></tr>
+              <tr><td class="code">6</td><td>決算・材料の強さ</td><td>過熱に見えても上方修正が続くなら強い相場が続くことがあります。売られすぎでも業績悪化なら危険です。</td></tr>
+              <tr><td class="code">7</td><td>PER・PBRの過去比較</td><td>同業他社や過去平均と比べます。PERが低くても業績悪化中なら割安とは限りません。</td></tr>
+              <tr><td class="code">8</td><td>決算後の株価反応</td><td>好決算で下落なら織り込み済み、悪決算で上昇なら悪材料出尽くしの可能性があります。</td></tr>
+              <tr><td class="code">9</td><td>チャートの節目</td><td>年初来高値、上場来高値、直近高値、直近安値、200日線を確認します。</td></tr>
+              <tr><td class="code">10</td><td>テーマ資金の流れ</td><td>半導体全体、AI関連、データセンター関連の資金流入や循環物色を見ます。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>主要シグナル</h2>
+        <div class="grid">
+          <div class="mini">
+            <span class="tag warn">RSI</span>
+            <b>70超えでも即売りではない</b>
+            <p>強い上昇トレンドではRSIが70以上のまま上がり続けることがあります。逆に弱い銘柄は30以下でもさらに下がります。</p>
+          </div>
+          <div class="mini">
+            <span class="tag warn">乖離率</span>
+            <b>25日線との距離を見る</b>
+            <p>短期急騰銘柄は25日線からの乖離が過熱感を示します。ただしテーマ株・小型株は+20％以上でも伸びることがあります。</p>
+          </div>
+          <div class="mini">
+            <span class="tag">出来高</span>
+            <b>天井・底入れの温度計</b>
+            <p>高値圏の出来高急増は利確売りの増加、急落後の大商いはセリングクライマックス候補として見ます。</p>
+          </div>
+          <div class="mini">
+            <span class="tag dark">信用残</span>
+            <b>将来の売り圧力を読む</b>
+            <p>株価上昇と信用買い残増加が同時に進むと、下落時に追証や投げ売りが出やすくなります。</p>
+          </div>
+          <div class="mini">
+            <span class="tag dark">材料</span>
+            <b>業績の裏付けを確認</b>
+            <p>決算が市場予想を大きく上回る、受注残が急増する、構造的テーマが続く場合は過熱でも強いことがあります。</p>
+          </div>
+          <div class="mini">
+            <span class="tag">貸借需給</span>
+            <b>踏み上げと買い戻し</b>
+            <p>空売り残や逆日歩は売り方の苦しさを示すことがあり、売られすぎ銘柄の急反発要因になります。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>判断の目安</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>状態</th><th>複数重なると注意するサイン</th><th>確認したい反応</th></tr></thead>
+            <tbody>
+              <tr><td><b>買われすぎ</b></td><td>RSIが80前後、25日線から+20％以上乖離、出来高急増、信用買い残急増、PERが過去平均より大幅に高い、SNSや個人投資家の話題が急増。</td><td>好材料が出ても伸びない、好決算でも売られる場合は短期過熱や織り込み済みに注意します。</td></tr>
+              <tr><td><b>売られすぎ</b></td><td>RSIが20〜30、25日線から-15％以上乖離、悪材料後に出来高急増、信用買い残が整理、PER・PBRが過去レンジ下限、空売りが積み上がる。</td><td>悪決算でも下げ止まる、重要な支持線で反発する、出来高を伴って戻す場合は反発候補です。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <p>買われすぎでも業績期待がさらに上がれば株価は上がります。売られすぎでも業績悪化が続けば株価はさらに下がります。</p>
+        </div>
+      </section>
+    </article>
+
+    <article class="panel" id="decision">
+      <section class="block">
+        <h2>投資判断チェック</h2>
+        <ul class="checks">
+          <li><b>在庫が増えていないか</b><br>売上が伸びていても、企業側や顧客側の在庫が急増すると次の調整サインになります。</li>
+          <li><b>価格上昇が続くか</b><br>DRAM、NAND、HBMの価格が強い間は、メモリ関連・検査装置・後工程関連に追い風です。</li>
+          <li><b>受注残がピークアウトしていないか</b><br>製造装置株は実需より先に株価が動くため、受注残の変化を重視します。</li>
+          <li><b>設備投資計画が拡大しているか</b><br>AIデータセンター、半導体工場、電力インフラの投資継続性を確認します。</li>
+          <li><b>株価の織り込み度は高すぎないか</b><br>PER、PBR、決算後の反応、テーマの市場認知度を合わせて見ます。</li>
+          <li><b>テーマ純度と事業分散を分ける</b><br>小型高純度は値動きが荒く、大型分散型は安定寄りになりやすいです。</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2>参照メモ</h2>
+        <p>本ページはユーザー提供レポートをHTML化したものです。リンク先や業績数値は更新される可能性があるため、実際の判断前には最新の決算資料・IR・株価指標を確認してください。</p>
+        <ul class="source-list">
+          <li>SIA: 世界半導体売上</li>
+          <li>Gartner: 半導体売上・データセンター電力消費予測</li>
+          <li>Reuters: Micron、データセンター関連報道</li>
+          <li>各社IR・ニュースリリース</li>
+        </ul>
+        <div class="callout warn">
+          <p>このHTMLは投資助言ではなく、テーマ整理と確認項目の可視化です。売買判断はリスク許容度、資金管理、最新情報を踏まえて行ってください。</p>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    <div class="shell">作成日: 2026年6月30日 / 対象: 日本国内株式のデータセンター関連・半導体関連テーマ</div>
+  </footer>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const panels = Array.from(document.querySelectorAll(".panel"));
+
+    function activateTab(id) {
+      tabs.forEach((tab) => {
+        const active = tab.dataset.tab === id;
+        tab.setAttribute("aria-selected", String(active));
+      });
+      panels.forEach((panel) => panel.classList.toggle("active", panel.id === id));
+      history.replaceState(null, "", `#${id}`);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => activateTab(tab.dataset.tab));
+    });
+
+    const initial = location.hash.replace("#", "");
+    if (initial && panels.some((panel) => panel.id === initial)) {
+      activateTab(initial);
+    }
+  </script>
+</body>
+</html>
