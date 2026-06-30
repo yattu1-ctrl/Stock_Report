@@ -866,6 +866,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="technical" data-tab="technical">テクニカル分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="ai-analysis" data-tab="ai-analysis">AI分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="screening-test" data-tab="screening-test">スクリーニングテスト</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="screening-patterns" data-tab="screening-patterns">設定別分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="nikkei-correlation" data-tab="nikkei-correlation">日経平均相関</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="sector-chart" data-tab="sector-chart">セクタ別</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
@@ -1504,8 +1505,13 @@
           </table>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜700営業日前の676期間。各期間で2条件・3条件の組み合わせをテストし、最も効果的だった条件、抽出銘柄数、平均騰落率、勝率を表示します。</p>
-        <h3>スクリーニング設定別分析</h3>
-        <p>上の日別最適化で実際に採用された条件セットをパターン化し、各パターンを25〜700営業日前の全期間に固定適用した場合の成績を比較します。</p>
+      </section>
+    </article>
+
+    <article class="panel" id="screening-patterns">
+      <section class="block">
+        <h2>スクリーニング設定別分析</h2>
+        <p>スクリーニングテストの日別最適化で実際に採用された条件セットをパターン化し、各パターンを25〜700営業日前の全期間に固定適用した場合の成績を比較します。</p>
         <div class="grid" id="screeningPatternSummary"></div>
         <div class="table-scroll">
           <table id="screeningPatternTable">
@@ -1936,6 +1942,7 @@
     ].map(([name, code, sector, price]) => ({ name, code, sector, price, minPurchase: price == null ? null : price * 100 }));
     let stockSort = { key: "code", direction: "asc" };
     let technicalSort = { key: "code", direction: "asc" };
+    let screeningPatternSort = { key: "averageReturn", direction: "desc" };
     let selectedChartCode = null;
     let screeningTestRows = [];
     const sectorChartColors = ["#18211f", "#2563eb", "#dc2626", "#0f766e", "#b45309", "#7c3aed", "#0891b2", "#be123c", "#4d7c0f", "#9333ea", "#0f172a", "#ea580c"];
@@ -2797,16 +2804,38 @@
     }
 
     function renderScreeningPatternAnalysis(table, summary, dailyOptimization, patternResults) {
-      const rows = [dailyOptimization, ...patternResults].filter(Boolean);
+      const rows = [dailyOptimization, ...patternResults].filter(Boolean).sort((a, b) => {
+        const av = screeningPatternSortValue(a, screeningPatternSort.key);
+        const bv = screeningPatternSortValue(b, screeningPatternSort.key);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        const result = typeof av === "number" && typeof bv === "number"
+          ? av - bv
+          : String(av).localeCompare(String(bv), "ja");
+        return screeningPatternSort.direction === "asc" ? result : -result;
+      });
       const bestFixed = patternResults[0] || null;
       summary.innerHTML = [
         `<div class="mini"><span class="tag">日別最適化</span><b>${dailyOptimization?.testedPeriods || 0}期間 / ${dailyOptimization?.hitCount || 0}ヒット</b><p>各基準日で最も平均騰落率が高かった条件を採用した保存結果です。</p></div>`,
         `<div class="mini"><span class="tag warn">使用パターン</span><b>${patternResults.length}種類</b><p>日別最適化で一度以上採用された条件セットだけを固定条件として再集計します。</p></div>`,
         `<div class="mini"><span class="tag dark">固定条件トップ</span><b>${bestFixed ? `${bestFixed.labels.join(" + ")} / ${bestFixed.averageReturn.toFixed(2)}%` : "—"}</b><p>25〜700営業日前の全期間に固定適用した平均騰落率の上位です。</p></div>`
       ].join("");
-      table.querySelector("thead").innerHTML = `<tr>
-        <th>区分</th><th>スクリーニング設定</th><th>日別採用</th><th>検証期間</th><th>ヒット銘柄数</th><th>平均ヒット銘柄数</th><th>平均勝率</th><th>平均騰落率</th><th>プラス期間率</th>
-      </tr>`;
+      const columns = [
+        ["type", "区分"],
+        ["labels", "スクリーニング設定"],
+        ["adoptedPeriods", "日別採用"],
+        ["testedPeriods", "検証期間"],
+        ["hitCount", "ヒット銘柄数"],
+        ["averageHitCount", "平均ヒット銘柄数"],
+        ["averageWinRate", "平均勝率"],
+        ["averageReturn", "平均騰落率"],
+        ["positivePeriodRate", "プラス期間率"]
+      ];
+      table.querySelector("thead").innerHTML = `<tr>${columns.map(([key, label]) => {
+        const active = screeningPatternSort.key === key ? ` sort-active ${screeningPatternSort.direction}` : "";
+        return `<th class="sortable${active}" data-screening-pattern-sort="${key}">${label}</th>`;
+      }).join("")}</tr>`;
       table.querySelector("tbody").innerHTML = rows.map((row, index) => {
         const isDaily = row.type === "日別最適化";
         return `<tr>
@@ -2821,6 +2850,21 @@
           <td>${row.positivePeriodRate.toFixed(1)}%</td>
         </tr>`;
       }).join("");
+      table.querySelectorAll("th.sortable").forEach((th) => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.screeningPatternSort;
+          screeningPatternSort = {
+            key,
+            direction: screeningPatternSort.key === key && screeningPatternSort.direction === "desc" ? "asc" : "desc"
+          };
+          renderScreeningPatternAnalysis(table, summary, dailyOptimization, patternResults);
+        });
+      });
+    }
+
+    function screeningPatternSortValue(row, key) {
+      if (key === "labels") return row.labels.join(" + ");
+      return row[key];
     }
 
     function openScreeningStockPopup(startLookback) {
