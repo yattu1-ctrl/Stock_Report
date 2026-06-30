@@ -1317,7 +1317,7 @@
             <tbody></tbody>
           </table>
         </div>
-        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜100営業日前。2条件・3条件の組み合わせをテストし、抽出銘柄数、平均騰落率、勝率で比較します。</p>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜99営業日前の75期間。各期間で2条件・3条件の組み合わせをテストし、最も効果的だった条件、抽出銘柄数、平均騰落率、勝率を表示します。</p>
       </section>
     </article>
 
@@ -2375,31 +2375,25 @@
       return results;
     }
 
-    function evaluateScreeningCombination(combo, startMin = 25, startMax = 100, horizon = 25) {
+    function evaluateScreeningCombinationAtLookback(combo, startLookback, horizon = 25) {
       const trades = [];
-      let activePeriods = 0;
-      for (let startLookback = startMin; startLookback <= startMax; startLookback += 1) {
-        const endLookback = startLookback - horizon;
-        if (endLookback < 0) continue;
-        const startRows = calculateTechnicalRowsAtLookback(startLookback);
-        const endRowsByCode = new Map(calculateTechnicalRowsAtLookback(endLookback).map((row) => [String(row.code), row]));
-        let periodMatches = 0;
-        startRows.forEach((row) => {
-          if (!combo.every(([key]) => isAiSignalActive(row, key))) return;
-          const futureRow = endRowsByCode.get(String(row.code));
-          const return25 = percentChange(Number(futureRow?.currentPrice), Number(row.currentPrice));
-          if (!Number.isFinite(return25)) return;
-          periodMatches += 1;
-          trades.push({
-            code: row.code,
-            name: row.name,
-            startLookback,
-            endLookback,
-            return25
-          });
+      const endLookback = startLookback - horizon;
+      if (endLookback < 0) return null;
+      const startRows = calculateTechnicalRowsAtLookback(startLookback);
+      const endRowsByCode = new Map(calculateTechnicalRowsAtLookback(endLookback).map((row) => [String(row.code), row]));
+      startRows.forEach((row) => {
+        if (!combo.every(([key]) => isAiSignalActive(row, key))) return;
+        const futureRow = endRowsByCode.get(String(row.code));
+        const return25 = percentChange(Number(futureRow?.currentPrice), Number(row.currentPrice));
+        if (!Number.isFinite(return25)) return;
+        trades.push({
+          code: row.code,
+          name: row.name,
+          startLookback,
+          endLookback,
+          return25
         });
-        if (periodMatches > 0) activePeriods += 1;
-      }
+      });
       if (!trades.length) return null;
       const returns = trades.map((trade) => trade.return25);
       const averageReturn = returns.reduce((sum, value) => sum + value, 0) / returns.length;
@@ -2409,7 +2403,6 @@
       return {
         labels: combo.map(([, label]) => label),
         count: trades.length,
-        activePeriods,
         averageReturn,
         winRate,
         best,
@@ -2425,34 +2418,50 @@
         ...buildSignalCombinations(aiSignalDefinitions, 2),
         ...buildSignalCombinations(aiSignalDefinitions, 3)
       ];
-      const results = combos
-        .map((combo) => evaluateScreeningCombination(combo))
-        .filter(Boolean)
-        .filter((result) => result.count >= 20)
-        .sort((a, b) => b.averageReturn - a.averageReturn || b.winRate - a.winRate || b.count - a.count)
-        .slice(0, 30);
+      const results = Array.from({ length: 75 }, (_, index) => 25 + index).map((startLookback) => {
+        const candidates = combos
+          .map((combo) => evaluateScreeningCombinationAtLookback(combo, startLookback))
+          .filter(Boolean)
+          .filter((result) => result.count >= 3)
+          .sort((a, b) => b.averageReturn - a.averageReturn || b.winRate - a.winRate || b.count - a.count);
+        return {
+          startLookback,
+          endLookback: startLookback - 25,
+          best: candidates[0] || null,
+          testedCombinations: candidates.length
+        };
+      });
       const totalCombos = combos.length;
-      const best = results[0] || null;
+      const validResults = results.filter((result) => result.best);
+      const averageOfBest = validResults.length
+        ? validResults.reduce((sum, result) => sum + result.best.averageReturn, 0) / validResults.length
+        : null;
+      const winRateOfBest = validResults.length
+        ? validResults.filter((result) => result.best.averageReturn > 0).length / validResults.length * 100
+        : null;
       summary.innerHTML = [
-        `<div class="mini"><span class="tag">検証範囲</span><b>25〜100営業日前</b><p>各基準日から25営業日後までの騰落率を、1日ずつ遡って検証します。</p></div>`,
-        `<div class="mini"><span class="tag warn">組み合わせ</span><b>${totalCombos}通り</b><p>テクニカルサインの2条件・3条件ANDを横断テストします。</p></div>`,
-        `<div class="mini"><span class="tag dark">最上位</span><b>${best ? `${best.labels.join(" + ")} / 平均 ${best.averageReturn.toFixed(2)}%` : "—"}</b><p>抽出20件以上の条件を平均騰落率順に表示します。</p></div>`
+        `<div class="mini"><span class="tag">検証範囲</span><b>25〜99営業日前の75期間</b><p>各基準日から25営業日後までの騰落率を、1日ずつ遡って検証します。</p></div>`,
+        `<div class="mini"><span class="tag warn">組み合わせ</span><b>${totalCombos}通り</b><p>各期間で2条件・3条件ANDを全て試し、抽出3銘柄以上の最上位条件を採用します。</p></div>`,
+        `<div class="mini"><span class="tag dark">75期間サマリー</span><b>${averageOfBest == null ? "—" : `平均 ${colorNumber(averageOfBest, `${averageOfBest.toFixed(2)}%`)} / 勝率 ${winRateOfBest.toFixed(1)}%`}</b><p>各期間の最上位条件だけを並べた場合の平均です。</p></div>`
       ].join("");
       table.querySelector("thead").innerHTML = `<tr>
-        <th>順位</th><th>スクリーニング条件</th><th>抽出銘柄数</th><th>平均騰落率</th><th>勝率</th><th>出現期間数</th><th>最大上昇</th><th>最大下落</th>
+        <th>基準日</th><th>検証期間</th><th>最上位スクリーニング条件</th><th>抽出銘柄数</th><th>平均騰落率</th><th>勝率</th><th>最大上昇</th><th>最大下落</th>
       </tr>`;
-      table.querySelector("tbody").innerHTML = results.length ? results.map((result, index) => (
-        `<tr>
-          <td>${index + 1}</td>
-          <td>${result.labels.join("<br>")}</td>
-          <td>${result.count}</td>
-          <td>${colorNumber(result.averageReturn, `${result.averageReturn.toFixed(2)}%`)}</td>
-          <td>${result.winRate.toFixed(1)}%</td>
-          <td>${result.activePeriods}</td>
-          <td>${result.best.name} (${result.best.code})<br>${colorNumber(result.best.return25, `${result.best.return25.toFixed(2)}%`)} / ${result.best.startLookback}日前</td>
-          <td>${result.worst.name} (${result.worst.code})<br>${colorNumber(result.worst.return25, `${result.worst.return25.toFixed(2)}%`)} / ${result.worst.startLookback}日前</td>
-        </tr>`
-      )).join("") : `<tr><td colspan="8">抽出20件以上の組み合わせがありませんでした。</td></tr>`;
+      table.querySelector("tbody").innerHTML = results.map(({ startLookback, endLookback, best }) => {
+        if (!best) {
+          return `<tr><td>${startLookback}日前</td><td>${startLookback}日前→${endLookback}日前</td><td colspan="6">抽出3銘柄以上の組み合わせがありませんでした。</td></tr>`;
+        }
+        return `<tr>
+          <td>${startLookback}日前</td>
+          <td>${startLookback}日前→${endLookback}日前</td>
+          <td>${best.labels.join("<br>")}</td>
+          <td>${best.count}</td>
+          <td>${colorNumber(best.averageReturn, `${best.averageReturn.toFixed(2)}%`)}</td>
+          <td>${best.winRate.toFixed(1)}%</td>
+          <td>${best.best.name} (${best.best.code})<br>${colorNumber(best.best.return25, `${best.best.return25.toFixed(2)}%`)}</td>
+          <td>${best.worst.name} (${best.worst.code})<br>${colorNumber(best.worst.return25, `${best.worst.return25.toFixed(2)}%`)}</td>
+        </tr>`;
+      }).join("");
     }
 
     function renderTechnicalControls() {
