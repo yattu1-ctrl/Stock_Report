@@ -398,6 +398,45 @@
       font-weight: 700;
     }
 
+    .table-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .metric-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .metric-toggle input {
+      accent-color: var(--accent);
+    }
+
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sortable::after {
+      content: " ⇅";
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .sort-active.asc::after { content: " ↑"; color: var(--accent); }
+    .sort-active.desc::after { content: " ↓"; color: var(--accent); }
+
     .source-list {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -458,6 +497,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="datacenter" data-tab="datacenter">データセンター関連</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="semiconductor" data-tab="semiconductor">半導体関連</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="candidates" data-tab="candidates">候補銘柄</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="stock-list" data-tab="stock-list">銘柄一覧</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
@@ -910,6 +950,24 @@
       </section>
     </article>
 
+    <article class="panel" id="stock-list">
+      <section class="block">
+        <h2>銘柄一覧</h2>
+        <p>レポート内に登場する銘柄を一覧化しています。上のチェックボックスで表示したい指標列を追加し、列見出しをクリックすると昇順・降順で並び替えできます。</p>
+        <div class="callout warn">
+          <p>PER、PBR、ROEなどのファンダメンタル指標はデータ列を先に用意しています。現時点では未入力のため、実データ連携後に値が入ります。</p>
+        </div>
+        <div class="table-controls" id="metricControls" aria-label="表示する指標列"></div>
+        <div class="table-scroll">
+          <table id="stockListTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">現在価格はYahoo Finance chart APIから取得した2026年6月30日10時台の値。最小購入は単元株数100株で概算。新光電気工業は取得時点で価格未取得。</p>
+      </section>
+    </article>
+
     <article class="panel" id="portfolio">
       <section class="block">
         <h2>予算200万円でのポートフォリオ</h2>
@@ -1205,6 +1263,39 @@
   <script>
     const tabs = Array.from(document.querySelectorAll(".tab"));
     const panels = Array.from(document.querySelectorAll(".panel"));
+    const metricColumns = [
+      ["per", "PER"], ["perChange", "PER増減率"], ["pbr", "PBR"], ["pbrChange", "PBR増減率"],
+      ["roe", "ROE"], ["roeChange", "ROE増減"], ["roa", "ROA"], ["roaChange", "ROA増減"],
+      ["roic", "ROIC"], ["roicChange", "ROIC増減"], ["dividend", "配当(%)"], ["dividendChange", "配当増減"],
+      ["revenue", "売上"], ["revenueChange", "売上増減"], ["revenueGrowth", "売上上昇率"], ["revenueGrowthChange", "売上上昇率増減"],
+      ["opMargin", "営業利益率"], ["opMarginChange", "営業利益率増減"], ["grossMargin", "粗利率"], ["grossMarginChange", "粗利率増減"],
+      ["recurringMargin", "経常利益率"], ["recurringMarginChange", "経常利益率増減"], ["netMargin", "純利益率"], ["netMarginChange", "純利益率増減"],
+      ["backlog", "受注残"], ["backlogChange", "受注残増減"], ["inventoryChange", "在庫増減率"]
+    ];
+    const stockRows = [
+      ["キオクシアHD","285A","半導体メーカー",88490],["アドバンテスト","6857","検査・テスター",32160],["日本電子材料","6855","検査・テスター",7890],["東京エレクトロン","8035","半導体製造装置",77280],
+      ["SCREEN HD","7735","半導体製造装置",17555],["トリケミカル研究所","4369","半導体材料",3470],["信越化学工業","4063","半導体材料",6951],["SUMCO","3436","半導体材料",3937],
+      ["レーザーテック","6920","検査・テスター",49670],["ディスコ","6146","半導体製造装置",81270],["ソシオネクスト","6526","半導体メーカー",2517.5],["KOKUSAI ELECTRIC","6525","半導体製造装置",10730],
+      ["イビデン","4062","後工程・パッケージ",24070],["TOWA","6315","後工程・パッケージ",3315],["芝浦メカトロニクス","6590","半導体製造装置",4535],["アオイ電子","6832","後工程・パッケージ",2733],
+      ["ヤマハ発動機","7272","後工程・実装",1228],["JUKI","6440","後工程・実装",516],["ローツェ","6323","半導体製造装置",4825],["東京精密","7729","半導体製造装置・計測",19760],
+      ["タツモ","6266","半導体製造装置",4665],["ダイフク","6383","工場自動化・搬送",7080],["マクニカHD","3132","半導体商社",3163],["ミネベアミツミ","6479","半導体・電子部品",4751],
+      ["ルネサス","6723","半導体メーカー",4805],["ローム","6963","半導体メーカー",5394],["サンケン電気","6707","パワー半導体",11275],["新電元工業","6844","パワー半導体",3870],
+      ["メガチップス","6875","ファブレス半導体",10560],["日置電機","6866","計測機器",12230],["HORIBA","6856","計測機器",27475],["大林組","1802","建設・DC",3249],
+      ["鹿島","1812","建設・DC",5773],["大成建設","1801","建設・DC",14245],["清水建設","1803","建設・DC",2551],["大和ハウス工業","1925","産業施設・DC",4432],
+      ["東急建設","1720","建設・都市型DC",1165],["ダイキン工業","6367","空調・冷却",24515],["高砂熱学工業","1969","空調・設備工事",5011],["新日本空調","1952","空調・設備工事",3705],
+      ["三機工業","1961","建築設備",2975],["大氣社","1979","空調・クリーンルーム",4930],["日比谷総合設備","1982","空調・電気設備",3055],["三菱重工業","7011","冷却・電源",3662],
+      ["三菱電機","6503","電源・受配電",5902],["富士電機","6504","電源・UPS",13585],["明電舎","6508","電力インフラ",9780],["日立製作所","6501","電力・制御・IT",4460],
+      ["GSユアサ","6674","蓄電池・非常用電源",6539],["SWCC","5805","電線・光ファイバー",13580],["関西電力","9503","電力",2296],["九州電力","9508","電力",1653.5],
+      ["J-POWER","9513","発電・電力インフラ",3634],["古河電気工業","5801","光ファイバー・電線",4662],["住友電気工業","5802","光ファイバー・通信部材",2924],["フジクラ","5803","光ファイバー・電線",6144],
+      ["NEC","6701","ネットワーク・海底ケーブル",3971],["アンリツ","6754","通信計測",4348],["大井電気","6822","光伝送装置",5580],["NTT","9432","通信・DC基盤",145.2],
+      ["三井不動産","8801","不動産・DC開発",1507.5],["三菱地所","8802","不動産・DC開発",4195],["東急","9005","不動産・都市型DC",1687.5],["三井物産","8031","商社・DC投資",4522],
+      ["東京センチュリー","8439","リース・DC投資",2497.5],["オリックス","8591","インフラ・不動産投資",6143],["野村マイクロ","6254","超純水装置",4910],["インターアクション","7725","検査・センサー",1785],
+      ["東京応化工業","4186","半導体材料",11180],["レゾナックHD","4004","半導体材料",17580],["富士フイルムHD","4901","半導体材料",3462],["ADEKA","4401","半導体材料",4186],
+      ["ステラケミファ","4109","高純度薬品",6560],["関東電化工業","4047","特殊ガス・材料",3525],["日本酸素HD","4091","産業ガス",5916],["住友ベークライト","4203","封止材・電子材料",7470],
+      ["日東電工","6988","電子材料",3150],["新光電気工業","6967","後工程・パッケージ",null],["ソニーグループ","6758","半導体・センサー",3273],["オルガノ","6368","超純水・工場インフラ",16260],
+      ["ダイダン","1980","空調・設備工事",2868]
+    ].map(([name, code, sector, price]) => ({ name, code, sector, price, minPurchase: price == null ? null : price * 100 }));
+    let stockSort = { key: "code", direction: "asc" };
 
     function activateTab(id) {
       tabs.forEach((tab) => {
@@ -1223,6 +1314,71 @@
     if (initial && panels.some((panel) => panel.id === initial)) {
       activateTab(initial);
     }
+
+    function formatValue(value, key) {
+      if (value == null || value === "") return "—";
+      if (key === "price" || key === "minPurchase" || key === "revenue" || key === "backlog") {
+        return `${Number(value).toLocaleString("ja-JP")}円`;
+      }
+      if (key && (key.includes("Change") || key.includes("Margin") || ["roe", "roa", "roic", "dividend", "revenueGrowth", "inventoryChange"].includes(key))) {
+        return `${Number(value).toLocaleString("ja-JP")}%`;
+      }
+      return String(value);
+    }
+
+    function getStockValue(row, key) {
+      return row[key] ?? null;
+    }
+
+    function renderMetricControls() {
+      const controls = document.getElementById("metricControls");
+      if (!controls) return;
+      controls.innerHTML = metricColumns.map(([key, label]) => (
+        `<label class="metric-toggle"><input type="checkbox" value="${key}">${label}</label>`
+      )).join("");
+      controls.addEventListener("change", renderStockListTable);
+    }
+
+    function renderStockListTable() {
+      const table = document.getElementById("stockListTable");
+      if (!table) return;
+      const checked = Array.from(document.querySelectorAll("#metricControls input:checked")).map((input) => input.value);
+      const baseColumns = [
+        ["name", "銘柄名"], ["code", "コード"], ["sector", "セクタ"], ["price", "現在価格"], ["minPurchase", "最小購入"]
+      ];
+      const activeColumns = baseColumns.concat(metricColumns.filter(([key]) => checked.includes(key)));
+      const sortedRows = [...stockRows].sort((a, b) => {
+        const av = getStockValue(a, stockSort.key);
+        const bv = getStockValue(b, stockSort.key);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        const result = typeof av === "number" && typeof bv === "number"
+          ? av - bv
+          : String(av).localeCompare(String(bv), "ja");
+        return stockSort.direction === "asc" ? result : -result;
+      });
+      table.querySelector("thead").innerHTML = `<tr>${activeColumns.map(([key, label]) => {
+        const active = stockSort.key === key ? ` sort-active ${stockSort.direction}` : "";
+        return `<th class="sortable${active}" data-sort="${key}">${label}</th>`;
+      }).join("")}</tr>`;
+      table.querySelector("tbody").innerHTML = sortedRows.map((row) => (
+        `<tr>${activeColumns.map(([key]) => `<td>${formatValue(getStockValue(row, key), key)}</td>`).join("")}</tr>`
+      )).join("");
+      table.querySelectorAll("th.sortable").forEach((th) => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.sort;
+          stockSort = {
+            key,
+            direction: stockSort.key === key && stockSort.direction === "asc" ? "desc" : "asc"
+          };
+          renderStockListTable();
+        });
+      });
+    }
+
+    renderMetricControls();
+    renderStockListTable();
   </script>
 </body>
 </html>
