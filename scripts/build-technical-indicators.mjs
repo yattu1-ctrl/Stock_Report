@@ -6,6 +6,8 @@ const htmlPath = path.join(rootDir, "index.html");
 const outDir = path.join(rootDir, "data");
 const outPath = path.join(outDir, "technical-indicators.json");
 const jsPath = path.join(outDir, "technical-indicators.js");
+const localPricePath = path.join(outDir, "price-history-200d.json");
+const useLocalData = process.argv.includes("--local");
 
 const html = fs.readFileSync(htmlPath, "utf8");
 const stockRowsBlock = html.match(/const stockRows = \[([\s\S]*?)\]\.map/);
@@ -21,6 +23,8 @@ for (const match of stockRowsBlock[1].matchAll(rowPattern)) {
 }
 
 const uniqueStocks = [...new Map(stocks.map((row) => [row.code, row])).values()];
+const localPricePayload = useLocalData ? JSON.parse(fs.readFileSync(localPricePath, "utf8")) : null;
+const localPriceRows = new Map((localPricePayload?.data || []).map((row) => [String(row.code), row]));
 
 function avg(values) {
   if (!values.length || values.some((value) => !Number.isFinite(value))) return null;
@@ -54,11 +58,41 @@ function ema(values, days) {
   return current;
 }
 
-function macd(closes) {
-  const ema12 = ema(closes, 12);
-  const ema26 = ema(closes, 26);
-  if (ema12 == null || ema26 == null) return null;
-  return ema12 - ema26;
+function emaSeries(values, days) {
+  if (values.length < days) return values.map(() => null);
+  const multiplier = 2 / (days + 1);
+  const output = values.map(() => null);
+  let current = avg(values.slice(0, days));
+  output[days - 1] = current;
+  for (let index = days; index < values.length; index += 1) {
+    current = (values[index] - current) * multiplier + current;
+    output[index] = current;
+  }
+  return output;
+}
+
+function macdDetails(closes) {
+  const ema12 = emaSeries(closes, 12);
+  const ema26 = emaSeries(closes, 26);
+  const macdSeries = closes.map((_, index) => (
+    Number.isFinite(ema12[index]) && Number.isFinite(ema26[index]) ? ema12[index] - ema26[index] : null
+  ));
+  const validMacd = macdSeries.filter(Number.isFinite);
+  const signalSeriesValid = emaSeries(validMacd, 9);
+  const signalSeries = macdSeries.map(() => null);
+  let validIndex = 0;
+  macdSeries.forEach((value, index) => {
+    if (!Number.isFinite(value)) return;
+    signalSeries[index] = signalSeriesValid[validIndex];
+    validIndex += 1;
+  });
+  const macd = macdSeries.at(-1);
+  const signal = signalSeries.at(-1);
+  return {
+    macd,
+    signal,
+    histogram: Number.isFinite(macd) && Number.isFinite(signal) ? macd - signal : null,
+  };
 }
 
 function rsi(closes, days = 14) {
@@ -124,6 +158,16 @@ function zigzag(prices, depth) {
   const highAfterPivot = Math.max(...afterPivot.map((row) => row.high).filter(Number.isFinite));
   const upTurnPrice = Number.isFinite(lowAfterPivot) ? lowAfterPivot * 1.01 : null;
   const downTurnPrice = Number.isFinite(highAfterPivot) ? highAfterPivot * 0.99 : null;
+  const recentExtreme = trend === "上昇中"
+    ? highAfterPivot
+    : trend === "下降中"
+      ? lowAfterPivot
+      : null;
+  const turnPrice = trend === "上昇中"
+    ? downTurnPrice
+    : trend === "下降中"
+      ? upTurnPrice
+      : null;
 
   return {
     type: pivot.type,
@@ -133,10 +177,26 @@ function zigzag(prices, depth) {
     trend,
     upTurnPrice,
     downTurnPrice,
+    recentExtreme,
+    turnPrice,
   };
 }
 
 async function fetchPrices(stock) {
+  if (useLocalData) {
+    const record = localPriceRows.get(String(stock.code));
+    if (!record?.prices?.length) {
+      return { stock, error: "No local chart data" };
+    }
+    const prices = record.prices.map((row) => ({
+      date: row.date,
+      high: row.high,
+      low: row.low,
+      close: row.close,
+    })).filter((row) => Number.isFinite(row.close) && Number.isFinite(row.high) && Number.isFinite(row.low));
+    return { stock, prices };
+  }
+
   const symbol = `${stock.code}.T`;
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d&events=history`;
   const response = await fetch(url, {
@@ -197,7 +257,10 @@ function indicatorsFor(stock, prices) {
     output[`priceChange${days}`] = round(pct(currentPrice, closes.at(-1 - days)));
   }
 
-  output.macd = round(macd(closes));
+  const macdOutput = macdDetails(closes);
+  output.macd = round(macdOutput.macd);
+  output.macdSignal = round(macdOutput.signal);
+  output.macdHistogram = round(macdOutput.histogram);
   output.rsi = round(rsi(closes));
 
   for (const depth of [7, 20]) {
@@ -211,6 +274,8 @@ function indicatorsFor(stock, prices) {
     output[`zigzag${depth}Value`] = round(zz?.value);
     output[`zigzag${depth}UpTurnPrice`] = round(zz?.upTurnPrice);
     output[`zigzag${depth}DownTurnPrice`] = round(zz?.downTurnPrice);
+    output[`zigzag${depth}RecentExtreme`] = round(zz?.recentExtreme);
+    output[`zigzag${depth}TurnPrice`] = round(zz?.turnPrice);
   }
   return output;
 }
@@ -235,8 +300,8 @@ for (const [index, stock] of uniqueStocks.entries()) {
 
 const output = {
   source: "Yahoo Finance unofficial chart API",
-  fetchedAt: new Date().toISOString(),
-  description: "Moving averages, moving average slope, price change, MACD, RSI, and ZigZag calculated from daily OHLC data.",
+  fetchedAt: localPricePayload?.fetchedAt || new Date().toISOString(),
+  description: "Moving averages, moving average slope, price change, MACD, MACD signal, MACD histogram, RSI, and ZigZag calculated from daily OHLC data.",
   failed,
   data: rows,
 };
@@ -268,15 +333,21 @@ const browserRows = output.data.map((row) => ({
   priceChange10: row.priceChange10,
   priceChange25: row.priceChange25,
   macd: row.macd,
+  macdSignal: row.macdSignal,
+  macdHistogram: row.macdHistogram,
   rsi: row.rsi,
   zigzag7: row.zigzag7,
   zigzag7Changed: row.zigzag7Changed,
   zigzag7UpTurnPrice: row.zigzag7UpTurnPrice,
   zigzag7DownTurnPrice: row.zigzag7DownTurnPrice,
+  zigzag7RecentExtreme: row.zigzag7RecentExtreme,
+  zigzag7TurnPrice: row.zigzag7TurnPrice,
   zigzag20: row.zigzag20,
   zigzag20Changed: row.zigzag20Changed,
   zigzag20UpTurnPrice: row.zigzag20UpTurnPrice,
   zigzag20DownTurnPrice: row.zigzag20DownTurnPrice,
+  zigzag20RecentExtreme: row.zigzag20RecentExtreme,
+  zigzag20TurnPrice: row.zigzag20TurnPrice,
 }));
 fs.writeFileSync(jsPath, [
   `window.technicalFetchedAt = ${JSON.stringify(output.fetchedAt)};`,

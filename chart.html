@@ -217,10 +217,13 @@
       }, []);
     }
 
-    function macdValues(closes) {
+    function macdSeriesBundle(closes) {
       const ema12 = ema(closes, 12);
       const ema26 = ema(closes, 26);
-      return closes.map((_, index) => ema12[index] - ema26[index]);
+      const macd = closes.map((_, index) => ema12[index] - ema26[index]);
+      const signal = ema(macd, 9);
+      const histogram = macd.map((value, index) => value - signal[index]);
+      return { macd, signal, histogram };
     }
 
     function rsiValues(closes, span = 14) {
@@ -258,7 +261,7 @@
     function populateStocks() {
       const rows = window.technicalRows || [];
       select.innerHTML = rows.map((row) => (
-        `<option value="${row.code}">${row.name} (${row.code})</option>`
+        `<option value="${row.code}">${row.name} (${row.code}) / ${row.sector}</option>`
       )).join("");
       if (!selectedCode || !rows.some((row) => String(row.code) === String(selectedCode))) {
         selectedCode = rows[0]?.code || "";
@@ -275,7 +278,11 @@
         return;
       }
       const period = document.querySelector("input[name='chartPeriod']:checked")?.value || "daily";
-      const data = aggregateHistory(rows, period).slice(-180);
+      const sourceRows = period === "monthly" && window.priceHistoryMonthlyRows?.[selectedCode]?.length
+        ? window.priceHistoryMonthlyRows[selectedCode]
+        : rows;
+      const limit = period === "daily" ? 260 : period === "weekly" ? 200 : 360;
+      const data = (period === "monthly" ? sourceRows : aggregateHistory(sourceRows, period)).slice(-limit);
       const closes = data.map((row) => row.c);
       const selectedMas = Array.from(document.querySelectorAll(".chart-ma:checked")).map((input) => Number(input.value));
       const showRsi = document.getElementById("chartRsi").checked;
@@ -290,7 +297,7 @@
       const right = 34;
       const chartWidth = width - left - right;
       const panels = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
-      const height = top + mainHeight + (panels - 1) * subHeight + 44;
+      const height = top + mainHeight + 60 + (panels - 1) * subHeight;
       const x = (index) => left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
       const maSeries = Object.fromEntries(selectedMas.map((span) => [span, movingAverage(closes, span)]));
       const priceValues = data.flatMap((row) => [row.h, row.l]).concat(Object.values(maSeries).flat().filter(Number.isFinite));
@@ -313,6 +320,23 @@
           <rect x="${(cx - candleWidth / 2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleWidth.toFixed(1)}" height="${bodyHeight.toFixed(1)}" fill="${color}" rx="1"/>`;
       }).join("");
       const maColors = { 5: "#2563eb", 10: "#0f766e", 25: "#b45309", 75: "#7c3aed", 200: "#64748b" };
+      const boundaryLines = data.map((row, index) => {
+        if (index === 0) return "";
+        const previous = data[index - 1].d;
+        const current = row.d;
+        const isBoundary = period === "monthly"
+          ? current.slice(0, 4) !== previous.slice(0, 4)
+          : current.slice(0, 7) !== previous.slice(0, 7);
+        if (!isBoundary) return "";
+        const label = period === "monthly" ? current.slice(0, 4) : current.slice(5, 7);
+        const xx = x(index);
+        return `<line x1="${xx.toFixed(1)}" y1="${top}" x2="${xx.toFixed(1)}" y2="${top + mainHeight}" stroke="#d9e1dd" stroke-dasharray="3 5"/><text x="${(xx + 4).toFixed(1)}" y="${top + mainHeight + 18}" fill="#63716d" font-size="11">${label}</text>`;
+      }).join("");
+      const dateLabels = [0, .25, .5, .75, 1].map((ratio) => {
+        const index = Math.min(data.length - 1, Math.round((data.length - 1) * ratio));
+        const label = period === "monthly" ? data[index].d.slice(0, 7) : data[index].d.slice(5);
+        return `<text x="${x(index).toFixed(1)}" y="${top + mainHeight + 34}" fill="#334155" font-size="12" text-anchor="middle">${label}</text>`;
+      }).join("");
       const grid = [0, .25, .5, .75, 1].map((ratio) => {
         const y = top + ratio * mainHeight;
         const value = maxPrice + pad - ratio * (maxPrice - minPrice + pad * 2);
@@ -329,7 +353,7 @@
         return `<path d="${svgPath(points)}" fill="none" stroke="${color}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
       };
       let subPanels = "";
-      let panelTop = top + mainHeight + 30;
+      let panelTop = top + mainHeight + 58;
       if (showRsi) {
         const rsi = rsiValues(closes);
         const yRsi = (value) => panelTop + (100 - value) * (subHeight - 30) / 100;
@@ -338,25 +362,35 @@
         panelTop += subHeight;
       }
       if (showMacd) {
-        const macd = macdValues(closes);
-        const min = Math.min(...macd);
-        const max = Math.max(...macd);
+        const macdData = macdSeriesBundle(closes);
+        const macdValues = macdData.macd.concat(macdData.signal, macdData.histogram).filter(Number.isFinite);
+        const min = Math.min(...macdValues);
+        const max = Math.max(...macdValues);
         const range = max - min || 1;
         const yMacd = (value) => panelTop + (max - value) * (subHeight - 30) / range;
-        const points = macd.map((value, index) => ({ x: x(index), y: yMacd(value) }));
-        subPanels += `<text x="${left}" y="${panelTop - 8}" fill="#334155" font-size="13" font-weight="800">MACD</text><line x1="${left}" y1="${yMacd(0)}" x2="${width - right}" y2="${yMacd(0)}" stroke="#d9e1dd"/><path d="${svgPath(points)}" fill="none" stroke="#dc2626" stroke-width="2"/>`;
+        const zeroY = yMacd(0);
+        const barWidth = Math.max(2, Math.min(8, chartWidth / data.length * .52));
+        const histogramBars = macdData.histogram.map((value, index) => {
+          const cx = x(index);
+          const barY = yMacd(value);
+          const color = value >= 0 ? "#2563eb" : "#dc2626";
+          return `<rect x="${(cx - barWidth / 2).toFixed(1)}" y="${Math.min(barY, zeroY).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${Math.max(Math.abs(zeroY - barY), 1).toFixed(1)}" fill="${color}" opacity=".62"/>`;
+        }).join("");
+        const macdPoints = macdData.macd.map((value, index) => ({ x: x(index), y: yMacd(value) }));
+        const signalPoints = macdData.signal.map((value, index) => ({ x: x(index), y: yMacd(value) }));
+        subPanels += `<text x="${left}" y="${panelTop - 8}" fill="#334155" font-size="13" font-weight="800">MACD</text><line x1="${left}" y1="${zeroY}" x2="${width - right}" y2="${zeroY}" stroke="#d9e1dd"/>${histogramBars}<path d="${svgPath(macdPoints)}" fill="none" stroke="#dc2626" stroke-width="2"/><path d="${svgPath(signalPoints)}" fill="none" stroke="#2563eb" stroke-width="1.7"/>`;
       }
       const periodLabel = { daily: "日足", weekly: "週足", monthly: "月足" }[period] || "日足";
       title.textContent = `${stock?.name || selectedCode} (${selectedCode}) ${periodLabel} ローソク足`;
       document.title = `${stock?.name || selectedCode} チャート`;
       stage.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${stock?.name || selectedCode}のチャート">
         ${grid}
+        ${boundaryLines}
         ${candles}
         ${maLines}
         ${showZigzag7 ? zigzagLine(7, "#2563eb") : ""}
         ${showZigzag20 ? zigzagLine(20, "#b45309") : ""}
-        <text x="${left}" y="${height - 12}" fill="#63716d" font-size="12">${data[0].d}</text>
-        <text x="${width - right - 82}" y="${height - 12}" fill="#63716d" font-size="12">${data[data.length - 1].d}</text>
+        ${dateLabels}
         ${subPanels}
       </svg>`;
       const fetched = window.priceHistoryFetchedAt ? new Date(window.priceHistoryFetchedAt).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) : "—";

@@ -1224,6 +1224,7 @@
           <span>スクリーニング条件:</span>
           <label><input type="radio" name="technicalScreenMode" value="and" checked>AND</label>
           <label><input type="radio" name="technicalScreenMode" value="or">OR</label>
+          <label>セクタ<select id="technicalSectorFilter"><option value="">すべて</option></select></label>
         </div>
         <div class="table-controls" id="technicalControls" aria-label="表示するテクニカル指標列"></div>
         <div class="table-scroll">
@@ -1589,9 +1590,9 @@
       ["ma5Slope", "5日線上昇率"], ["ma10Slope", "10日線上昇率"], ["ma25Slope", "25日線上昇率"], ["ma75Slope", "75日線上昇率"], ["ma100Slope", "100日線上昇率"], ["ma200Slope", "200日線上昇率"],
       ["ma5Divergence", "5日線乖離率"], ["ma10Divergence", "10日線乖離率"], ["ma25Divergence", "25日線乖離率"], ["ma75Divergence", "75日線乖離率"], ["ma200Divergence", "200日線乖離率"],
       ["priceChange5", "5日株価上昇率"], ["priceChange10", "10日株価上昇率"], ["priceChange25", "25日株価上昇率"],
-      ["macd", "MACD"], ["rsi", "RSI"],
-      ["zigzag7", "ZigZag 7"], ["zigzag7UpTurnPrice", "ZigZag7 上昇転換目安"], ["zigzag7DownTurnPrice", "ZigZag7 下降転換目安"],
-      ["zigzag20", "ZigZag 20"], ["zigzag20UpTurnPrice", "ZigZag20 上昇転換目安"], ["zigzag20DownTurnPrice", "ZigZag20 下降転換目安"]
+      ["macd", "MACD"], ["macdHistogram", "MACDヒストグラム"], ["rsi", "RSI"],
+      ["zigzag7", "ZigZag 7"], ["zigzag7RecentExtreme", "ZigZag7 直近高値/安値"], ["zigzag7TurnPrice", "ZigZag7 転換目安"],
+      ["zigzag20", "ZigZag 20"], ["zigzag20RecentExtreme", "ZigZag20 直近高値/安値"], ["zigzag20TurnPrice", "ZigZag20 転換目安"]
     ];
     const stockRows = [
       ["キオクシアHD","285A","半導体メーカー",88490],["アドバンテスト","6857","検査・テスター",32160],["日本電子材料","6855","検査・テスター",7890],["東京エレクトロン","8035","半導体製造装置",77280],
@@ -1652,12 +1653,12 @@
     function formatTechnicalValue(value, key) {
       if (value == null || value === "") return "—";
       if (key === "zigzag7" || key === "zigzag20") return trendBadge(value);
-      if (key === "currentPrice" || key.includes("TurnPrice") || key.startsWith("ma")) {
+      if (key === "currentPrice" || key.includes("TurnPrice") || key.includes("RecentExtreme") || key.startsWith("ma")) {
         if (key.includes("Slope") || key.includes("Divergence")) return colorNumber(value, `${Number(value).toLocaleString("ja-JP")}%`);
         return `${Number(value).toLocaleString("ja-JP")}円`;
       }
       if (key.startsWith("priceChange")) return colorNumber(value, `${Number(value).toLocaleString("ja-JP")}%`);
-      if (key === "macd") return colorNumber(value, Number(value).toLocaleString("ja-JP"));
+      if (key === "macd" || key === "macdHistogram") return colorNumber(value, Number(value).toLocaleString("ja-JP"));
       if (key === "rsi") return Number(value).toLocaleString("ja-JP");
       return String(value);
     }
@@ -1865,6 +1866,14 @@
       controls.addEventListener("change", renderTechnicalTable);
     }
 
+    function renderTechnicalSectorFilter() {
+      const select = document.getElementById("technicalSectorFilter");
+      if (!select) return;
+      const sectors = [...new Set((window.technicalRows || []).map((row) => row.sector).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ja"));
+      select.innerHTML = `<option value="">すべて</option>${sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("")}`;
+      select.addEventListener("change", renderTechnicalTable);
+    }
+
     function aggregateHistory(rows, period) {
       if (period === "daily") return rows;
       const groups = new Map();
@@ -1909,10 +1918,13 @@
       }, []);
     }
 
-    function macdValues(closes) {
+    function macdSeriesBundle(closes) {
       const ema12 = ema(closes, 12);
       const ema26 = ema(closes, 26);
-      return closes.map((_, index) => ema12[index] - ema26[index]);
+      const macd = closes.map((_, index) => ema12[index] - ema26[index]);
+      const signal = ema(macd, 9);
+      const histogram = macd.map((value, index) => value - signal[index]);
+      return { macd, signal, histogram };
     }
 
     function rsiValues(closes, span = 14) {
@@ -2017,13 +2029,23 @@
         panelTop += subHeight;
       }
       if (showMacd) {
-        const macd = macdValues(closes);
-        const min = Math.min(...macd);
-        const max = Math.max(...macd);
+        const macdData = macdSeriesBundle(closes);
+        const macdValues = macdData.macd.concat(macdData.signal, macdData.histogram).filter(Number.isFinite);
+        const min = Math.min(...macdValues);
+        const max = Math.max(...macdValues);
         const range = max - min || 1;
         const yMacd = (value) => panelTop + (max - value) * (subHeight - 24) / range;
-        const points = macd.map((value, index) => ({ x: x(index), y: yMacd(value) }));
-        subPanels += `<text x="${left}" y="${panelTop - 6}" fill="#334155" font-size="12" font-weight="800">MACD</text><line x1="${left}" y1="${yMacd(0)}" x2="${width - right}" y2="${yMacd(0)}" stroke="#d9e1dd"/><path d="${svgPath(points)}" fill="none" stroke="#dc2626" stroke-width="1.8"/>`;
+        const zeroY = yMacd(0);
+        const barWidth = Math.max(2, Math.min(7, chartWidth / data.length * .5));
+        const histogramBars = macdData.histogram.map((value, index) => {
+          const cx = x(index);
+          const barY = yMacd(value);
+          const color = value >= 0 ? "#2563eb" : "#dc2626";
+          return `<rect x="${(cx - barWidth / 2).toFixed(1)}" y="${Math.min(barY, zeroY).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${Math.max(Math.abs(zeroY - barY), 1).toFixed(1)}" fill="${color}" opacity=".62"/>`;
+        }).join("");
+        const macdPoints = macdData.macd.map((value, index) => ({ x: x(index), y: yMacd(value) }));
+        const signalPoints = macdData.signal.map((value, index) => ({ x: x(index), y: yMacd(value) }));
+        subPanels += `<text x="${left}" y="${panelTop - 6}" fill="#334155" font-size="12" font-weight="800">MACD</text><line x1="${left}" y1="${zeroY}" x2="${width - right}" y2="${zeroY}" stroke="#d9e1dd"/>${histogramBars}<path d="${svgPath(macdPoints)}" fill="none" stroke="#dc2626" stroke-width="1.8"/><path d="${svgPath(signalPoints)}" fill="none" stroke="#2563eb" stroke-width="1.5"/>`;
       }
       const periodLabel = { daily: "日足", weekly: "週足", monthly: "月足" }[period] || "日足";
       title.textContent = `${stock?.name || selectedChartCode} (${selectedChartCode}) ${periodLabel}`;
@@ -2045,6 +2067,7 @@
       const rows = window.technicalRows || [];
       const checked = Array.from(document.querySelectorAll("#technicalControls input:checked")).map((input) => input.value);
       const screenMode = document.querySelector("input[name='technicalScreenMode']:checked")?.value || "and";
+      const selectedSector = document.getElementById("technicalSectorFilter")?.value || "";
       const activeFilters = checked.map((key) => ({
         key,
         filter: document.querySelector(`#technicalControls select[data-filter="${key}"]`)?.value || "all"
@@ -2054,15 +2077,16 @@
       ];
       const visibleKeys = new Set(checked);
       if (visibleKeys.has("zigzag7")) {
-        visibleKeys.add("zigzag7UpTurnPrice");
-        visibleKeys.add("zigzag7DownTurnPrice");
+        visibleKeys.add("zigzag7RecentExtreme");
+        visibleKeys.add("zigzag7TurnPrice");
       }
       if (visibleKeys.has("zigzag20")) {
-        visibleKeys.add("zigzag20UpTurnPrice");
-        visibleKeys.add("zigzag20DownTurnPrice");
+        visibleKeys.add("zigzag20RecentExtreme");
+        visibleKeys.add("zigzag20TurnPrice");
       }
       const activeColumns = baseColumns.concat(technicalColumns.filter(([key]) => visibleKeys.has(key)));
-      const filteredRows = activeFilters.length === 0 ? rows : rows.filter((row) => {
+      const sectorRows = selectedSector ? rows.filter((row) => row.sector === selectedSector) : rows;
+      const filteredRows = activeFilters.length === 0 ? sectorRows : sectorRows.filter((row) => {
         const results = activeFilters.map(({ key, filter }) => matchesTechnicalFilter(row, key, filter));
         return screenMode === "or" ? results.some(Boolean) : results.every(Boolean);
       });
@@ -2111,6 +2135,7 @@
     renderMetricControls();
     renderStockListTable();
     renderTechnicalControls();
+    renderTechnicalSectorFilter();
     document.querySelectorAll("input[name='stockScreenMode']").forEach((input) => {
       input.addEventListener("change", renderStockListTable);
     });

@@ -6,6 +6,9 @@ const htmlPath = path.join(rootDir, "index.html");
 const outDir = path.join(rootDir, "data");
 const jsonPath = path.join(outDir, "price-history-200d.json");
 const csvPath = path.join(outDir, "price-history-200d.csv");
+const jsPath = path.join(outDir, "price-history-200d.js");
+const requestedDailyRows = 1000;
+const requestedMonthlyMonths = 360;
 
 const html = fs.readFileSync(htmlPath, "utf8");
 const stockRowsBlock = html.match(/const stockRows = \[([\s\S]*?)\]\.map/);
@@ -45,9 +48,9 @@ function toCsvCell(value) {
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
-async function fetchChart(stock) {
+async function fetchChart(stock, { range, interval, limit }) {
   const symbol = `${stock.code}.T`;
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1y&interval=1d&events=history`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=history`;
   const response = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0",
@@ -78,7 +81,7 @@ async function fetchChart(stock) {
     low: normalizePrice(quote.low?.[index]),
     close: normalizePrice(quote.close?.[index]),
     volume: normalizePrice(quote.volume?.[index]),
-  })).filter((row) => row.close != null).slice(-200);
+  })).filter((row) => row.close != null).slice(-limit);
 
   return {
     stock,
@@ -97,38 +100,43 @@ const fetchedAt = new Date().toISOString();
 const results = [];
 
 for (const [index, stock] of uniqueStocks.entries()) {
-  const result = await fetchChart(stock);
-  results.push(result);
-  const status = result.error ? `NG ${result.error}` : `OK ${result.rows.length} rows`;
-  console.log(`${index + 1}/${uniqueStocks.length} ${stock.code} ${stock.name}: ${status}`);
+  const daily = await fetchChart(stock, { range: "5y", interval: "1d", limit: requestedDailyRows });
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  const monthly = await fetchChart(stock, { range: "max", interval: "1mo", limit: requestedMonthlyMonths });
+  results.push({ stock, daily, monthly });
+  const dailyStatus = daily.error ? `D NG ${daily.error}` : `D OK ${daily.rows.length}`;
+  const monthlyStatus = monthly.error ? `M NG ${monthly.error}` : `M OK ${monthly.rows.length}`;
+  console.log(`${index + 1}/${uniqueStocks.length} ${stock.code} ${stock.name}: ${dailyStatus}, ${monthlyStatus}`);
   await new Promise((resolve) => setTimeout(resolve, 80));
 }
 
-const successful = results.filter((result) => !result.error);
-const failed = results.filter((result) => result.error);
-const allRows = successful.flatMap((result) => result.rows);
+const successful = results.filter((result) => !result.daily.error);
+const failed = results.filter((result) => result.daily.error);
+const allRows = successful.flatMap((result) => result.daily.rows);
 
 const jsonOutput = {
   source: "Yahoo Finance unofficial chart API",
   fetchedAt,
-  requestedDays: 200,
+  requestedDays: requestedDailyRows,
+  requestedMonths: requestedMonthlyMonths,
   stocks: uniqueStocks.length,
   successful: successful.length,
   failed: failed.map((result) => ({
     code: result.stock.code,
     name: result.stock.name,
-    error: result.error,
+    error: result.daily.error,
   })),
   data: successful.map((result) => ({
     code: result.stock.code,
     name: result.stock.name,
     sector: result.stock.sector,
-    symbol: result.symbol,
-    currency: result.currency,
-    exchangeName: result.exchangeName,
-    regularMarketPrice: result.regularMarketPrice,
-    regularMarketTime: result.regularMarketTime,
-    prices: result.rows,
+    symbol: result.daily.symbol,
+    currency: result.daily.currency,
+    exchangeName: result.daily.exchangeName,
+    regularMarketPrice: result.daily.regularMarketPrice,
+    regularMarketTime: result.daily.regularMarketTime,
+    prices: result.daily.rows,
+    monthlyPrices: result.monthly.error ? [] : result.monthly.rows,
   })),
 };
 
@@ -150,7 +158,36 @@ fs.writeFileSync(csvPath, [
   csvHeader.join(","),
   ...csvRows.map((row) => row.map(toCsvCell).join(",")),
 ].join("\n") + "\n");
+const browserDailyRows = Object.fromEntries(jsonOutput.data.map((stock) => [
+  stock.code,
+  stock.prices.map((row) => ({
+    d: row.date,
+    o: row.open,
+    h: row.high,
+    l: row.low,
+    c: row.close,
+    v: row.volume,
+  })),
+]));
+const browserMonthlyRows = Object.fromEntries(jsonOutput.data.map((stock) => [
+  stock.code,
+  stock.monthlyPrices.map((row) => ({
+    d: row.date,
+    o: row.open,
+    h: row.high,
+    l: row.low,
+    c: row.close,
+    v: row.volume,
+  })),
+]));
+fs.writeFileSync(jsPath, [
+  `window.priceHistoryFetchedAt = ${JSON.stringify(jsonOutput.fetchedAt)};`,
+  `window.priceHistoryRows = ${JSON.stringify(browserDailyRows)};`,
+  `window.priceHistoryMonthlyRows = ${JSON.stringify(browserMonthlyRows)};`,
+  "",
+].join("\n"));
 
 console.log(`Saved ${jsonPath}`);
 console.log(`Saved ${csvPath}`);
+console.log(`Saved ${jsPath}`);
 console.log(`Success: ${successful.length}, Failed: ${failed.length}, Rows: ${allRows.length}`);
