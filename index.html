@@ -43,56 +43,33 @@
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='520' viewBox='0 0 1200 520'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13'%3E%3Cpath d='M0 86h1200M0 185h1200M0 284h1200M0 383h1200M114 0v520M246 0v520M378 0v520M510 0v520M642 0v520M774 0v520M906 0v520M1038 0v520'/%3E%3Ccircle cx='246' cy='185' r='34'/%3E%3Ccircle cx='774' cy='284' r='44'/%3E%3Cpath d='M246 185h528M774 284l132 99M510 86l132 99M378 383h528'/%3E%3C/g%3E%3C/svg%3E");
       background-size: cover;
       color: #fff;
-      padding: 46px 0 34px;
+      padding: 14px 0 12px;
     }
 
     .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .6fr);
-      gap: 28px;
-      align-items: end;
+      display: block;
     }
 
     .eyebrow {
-      margin: 0 0 10px;
+      margin: 0 0 2px;
       color: rgba(255,255,255,.78);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       letter-spacing: 0;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(30px, 5vw, 56px);
-      line-height: 1.14;
+      font-size: clamp(18px, 2.4vw, 26px);
+      line-height: 1.2;
       letter-spacing: 0;
     }
 
-    .lead {
-      max-width: 780px;
-      margin: 18px 0 0;
-      color: rgba(255,255,255,.88);
-      font-size: 16px;
-    }
-
-    .status-panel {
-      background: rgba(255,255,255,.13);
-      border: 1px solid rgba(255,255,255,.25);
-      border-radius: 8px;
-      padding: 18px;
-      backdrop-filter: blur(8px);
-    }
-
-    .status-panel strong {
-      display: block;
-      font-size: 24px;
-      line-height: 1.25;
-      margin-bottom: 8px;
-    }
-
-    .status-panel span {
-      color: rgba(255,255,255,.82);
-      font-size: 13px;
+    .header-meta {
+      margin-top: 3px;
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .tabs-wrap {
@@ -419,6 +396,55 @@
       cursor: pointer;
     }
 
+    .metric-filter {
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      gap: 5px 7px;
+      align-items: center;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .metric-filter label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .metric-filter select {
+      grid-column: 1 / -1;
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent-3);
+      font: inherit;
+      font-size: 12px;
+      padding: 2px 6px;
+    }
+
+    .screen-mode {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0 8px;
+      color: var(--accent-3);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .screen-mode label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
     .metric-toggle input {
       accent-color: var(--accent);
     }
@@ -436,6 +462,61 @@
 
     .sort-active.asc::after { content: " ↑"; color: var(--accent); }
     .sort-active.desc::after { content: " ↓"; color: var(--accent); }
+
+    .num-positive { color: #2563eb; font-weight: 800; }
+    .num-negative { color: #dc2626; font-weight: 800; }
+
+    .trend-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .trend-up {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .trend-down {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .trend-flat {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .news-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .news-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 4px 9px;
+      background: #fbfdfc;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .news-link:hover {
+      border-color: var(--accent);
+      background: var(--soft);
+    }
 
     .source-list {
       display: grid;
@@ -468,7 +549,7 @@
         grid-template-columns: 1fr;
       }
 
-      header { padding-top: 34px; }
+      header { padding-top: 12px; }
       section.block { padding: 18px; }
       .shell { width: min(100% - 22px, 1180px); }
       th, td { font-size: 13px; }
@@ -481,12 +562,8 @@
       <div>
         <p class="eyebrow">国内株式テーマレポート / 2026年6月末時点</p>
         <h1>データセンター・半導体 投資判断ツール</h1>
-        <p class="lead">AI需要を起点に、データセンター建設、冷却、電力、光通信、半導体製造装置、材料、後工程までを横断して整理したレポートです。</p>
+        <div class="header-meta" id="priceDataTimestamp">株価データ取得: —</div>
       </div>
-      <aside class="status-panel" aria-label="現在の市況認識">
-        <strong>上昇サイクル本格化</strong>
-        <span>半導体全体は在庫調整を通過。AI・データセンター・メモリは需給逼迫に近く、汎用品は回復途上の銘柄差が残ります。</span>
-      </aside>
     </div>
   </header>
 
@@ -497,7 +574,9 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="datacenter" data-tab="datacenter">データセンター関連</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="semiconductor" data-tab="semiconductor">半導体関連</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="candidates" data-tab="candidates">候補銘柄</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="news" data-tab="news">ニュース一覧</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="stock-list" data-tab="stock-list">銘柄一覧</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="technical" data-tab="technical">テクニカル分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
@@ -950,6 +1029,68 @@
       </section>
     </article>
 
+    <article class="panel" id="news">
+      <section class="block">
+        <h2>監視銘柄ニュース一覧</h2>
+        <p>候補銘柄を監視対象として、最新ニュース・株価ニュース・材料確認へすぐ移動できるリンクをまとめています。ニュース本文は固定せず、各リンク先で最新情報を確認します。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>ニュースリンク</th><th>確認ポイント</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>ダイダン</td><td class="code">1980</td><td>空調・衛生・産業施設工事</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E3%83%80%E3%82%A4%E3%83%80%E3%83%B3%201980%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/1980.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=1980" target="_blank" rel="noopener">株探</a></div></td>
+                <td>受注工事高、繰越工事高、産業施設工事、利益率。</td>
+              </tr>
+              <tr>
+                <td>明電舎</td><td class="code">6508</td><td>変圧器・電力インフラ</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E6%98%8E%E9%9B%BB%E8%88%8E%206508%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/6508.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6508" target="_blank" rel="noopener">株探</a></div></td>
+                <td>変圧器投資、受配電需要、電力インフラ投資、設備増強。</td>
+              </tr>
+              <tr>
+                <td>SWCC</td><td class="code">5805</td><td>電線・光ファイバー・電力ケーブル</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=SWCC%205805%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/5805.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=5805" target="_blank" rel="noopener">株探</a></div></td>
+                <td>電力ケーブル、光ファイバー、データセンター向け需要、受注残。</td>
+              </tr>
+              <tr>
+                <td>日本電子材料</td><td class="code">6855</td><td>プローブカード</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E6%97%A5%E6%9C%AC%E9%9B%BB%E5%AD%90%E6%9D%90%E6%96%99%206855%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/6855.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6855" target="_blank" rel="noopener">株探</a></div></td>
+                <td>HBM、メモリ検査、プローブカード需要、受注と利益率。</td>
+              </tr>
+              <tr>
+                <td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E3%83%88%E3%83%AA%E3%82%B1%E3%83%9F%E3%82%AB%E3%83%AB%E7%A0%94%E7%A9%B6%E6%89%80%204369%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/4369.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=4369" target="_blank" rel="noopener">株探</a></div></td>
+                <td>先端材料、台湾子会社、中国需要、原材料費。</td>
+              </tr>
+              <tr>
+                <td>住友電工</td><td class="code">5802</td><td>光ファイバー・DC通信部材</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E4%BD%8F%E5%8F%8B%E9%9B%BB%E5%B7%A5%205802%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/5802.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=5802" target="_blank" rel="noopener">株探</a></div></td>
+                <td>光ファイバー、通信部材、電力ケーブル、事業分散の影響。</td>
+              </tr>
+              <tr>
+                <td>芝浦メカトロニクス</td><td class="code">6590</td><td>先端パッケージ装置</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E8%8A%9D%E6%B5%A6%E3%83%A1%E3%82%AB%E3%83%88%E3%83%AD%E3%83%8B%E3%82%AF%E3%82%B9%206590%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/6590.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6590" target="_blank" rel="noopener">株探</a></div></td>
+                <td>後工程装置、先端パッケージ、GPU需要、受注動向。</td>
+              </tr>
+              <tr>
+                <td>オルガノ</td><td class="code">6368</td><td>超純水・半導体工場インフラ</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E3%82%AA%E3%83%AB%E3%82%AC%E3%83%8E%206368%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/6368.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6368" target="_blank" rel="noopener">株探</a></div></td>
+                <td>超純水、薬液精製、半導体工場投資、受注残。</td>
+              </tr>
+              <tr>
+                <td>野村マイクロ・サイエンス</td><td class="code">6254</td><td>超純水装置</td>
+                <td><div class="news-links"><a class="news-link" href="https://news.google.com/search?q=%E9%87%8E%E6%9D%91%E3%83%9E%E3%82%A4%E3%82%AF%E3%83%AD%206254%20%E6%A0%AA" target="_blank" rel="noopener">Googleニュース</a><a class="news-link" href="https://finance.yahoo.co.jp/quote/6254.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6254" target="_blank" rel="noopener">株探</a></div></td>
+                <td>超純水装置、海外案件、年初来高値圏、決算反応。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <p>ニュースは投資判断の入口です。材料の有無だけでなく、決算への影響、株価の織り込み度、出来高反応、信用需給を合わせて確認します。</p>
+        </div>
+      </section>
+    </article>
+
     <article class="panel" id="stock-list">
       <section class="block">
         <h2>銘柄一覧</h2>
@@ -968,72 +1109,79 @@
       </section>
     </article>
 
+    <article class="panel" id="technical">
+      <section class="block">
+        <h2>テクニカル分析</h2>
+        <p>Yahoo Finance非公式APIから取得した日足データをもとに、移動平均線、移動平均線の上昇率、株価上昇率、MACD、RSIを計算しています。上のチェックボックスで表示したい指標列を選び、列見出しで昇順・降順に並び替えできます。</p>
+        <div class="screen-mode" aria-label="スクリーニング条件">
+          <span>スクリーニング条件:</span>
+          <label><input type="radio" name="technicalScreenMode" value="and" checked>AND</label>
+          <label><input type="radio" name="technicalScreenMode" value="or">OR</label>
+        </div>
+        <div class="table-controls" id="technicalControls" aria-label="表示するテクニカル指標列"></div>
+        <div class="table-scroll">
+          <table id="technicalTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">移動平均線の上昇率は、当日移動平均と前営業日の同期間移動平均を比較。株価上昇率は現在値と指定営業日前の終値を比較。MACDは12日EMA-26日EMA、RSIは14日で計算。</p>
+      </section>
+    </article>
+
     <article class="panel" id="portfolio">
       <section class="block">
         <h2>予算200万円でのポートフォリオ</h2>
-        <p>候補銘柄の現在株価と単元株数100株を前提に、2,000,000円以内で組めるモデル配分です。単元株の制約が大きいため、分散度とテーマ純度のどちらを優先するかで形が変わります。</p>
+        <p>候補銘柄と関連銘柄の現在株価、単元株数100株を前提に、1銘柄あたり40万円以内で組む分散モデルです。値がさ株を避け、半導体・データセンター周辺テーマを複数に分けます。</p>
         <div class="grid">
           <div class="mini">
             <span class="tag">分散型</span>
-            <b>4銘柄 + 現金余力</b>
-            <p>投資額 1,719,400円。残余現金 280,600円。周辺インフラ、検査、材料、通信部材に分ける案です。</p>
+            <b>7銘柄 + 現金余力</b>
+            <p>投資額 1,937,720円。残余現金 62,280円。空調、材料、通信、後工程、冷却・電源、建築設備、通信基盤へ分散します。</p>
           </div>
           <div class="mini">
-            <span class="tag warn">集中型</span>
-            <b>3銘柄でほぼ満額</b>
-            <p>投資額 1,996,600円。残余現金 3,400円。SWCCを大きく入れ、電力・ケーブル色を強める案です。</p>
+            <span class="tag warn">上限ルール</span>
+            <b>1銘柄40万円以内</b>
+            <p>SWCC、明電舎、オルガノ、日本電子材料などはテーマ性があっても、1単元が40万円を超えるため今回は除外します。</p>
           </div>
           <div class="mini">
             <span class="tag dark">前提</span>
             <b>2026年6月30日株価</b>
-            <p>候補銘柄表と同じ株価を使用。手数料、税金、スプレッド、単元未満株は考慮していません。</p>
+            <p>Yahoo Finance非公式APIで取得した株価を使用。手数料、税金、スプレッド、単元未満株は考慮していません。</p>
           </div>
         </div>
       </section>
 
       <section class="block">
-        <h2>モデルA: 分散型</h2>
-        <p>値がさ株を避け、4銘柄に分ける案です。明電舎、SWCC、オルガノは1単元の金額が大きいため、ここでは外しています。</p>
+        <h2>40万円以内 分散PF</h2>
+        <p>各銘柄の投資額を40万円以内に抑え、データセンター周辺需要と半導体サイクルの両方を取る配分です。</p>
         <div class="table-scroll">
           <table>
-            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>狙い</th></tr></thead>
+            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>ニュース</th><th>狙い</th></tr></thead>
             <tbody>
-              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,896円</td><td>100株</td><td>289,600円</td><td>14.5%</td><td>半導体工場・DC設備投資の周辺需要。</td></tr>
-              <tr><td>日本電子材料</td><td class="code">6855</td><td>プローブカード</td><td>7,870円</td><td>100株</td><td>787,000円</td><td>39.4%</td><td>HBM・先端半導体検査の高純度テーマ。</td></tr>
-              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,500円</td><td>100株</td><td>350,000円</td><td>17.5%</td><td>次世代半導体材料と台湾向け出荷。</td></tr>
-              <tr><td>住友電工</td><td class="code">5802</td><td>光ファイバー・通信部材</td><td>2,928円</td><td>100株</td><td>292,800円</td><td>14.6%</td><td>DC通信部材を大型株で持つ安定寄り枠。</td></tr>
-              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>280,600円</td><td>14.0%</td><td>決算後の押し目、追加候補、リスク調整用。</td></tr>
+              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,876円</td><td>100株</td><td>287,600円</td><td>14.4%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/1980.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=1980" target="_blank" rel="noopener">株探</a></div></td><td>半導体工場・DC設備投資の周辺需要。</td></tr>
+              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,475円</td><td>100株</td><td>347,500円</td><td>17.4%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/4369.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=4369" target="_blank" rel="noopener">株探</a></div></td><td>次世代半導体材料と台湾向け出荷。</td></tr>
+              <tr><td>住友電工</td><td class="code">5802</td><td>光ファイバー・通信部材</td><td>2,924円</td><td>100株</td><td>292,400円</td><td>14.6%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/5802.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=5802" target="_blank" rel="noopener">株探</a></div></td><td>DC通信部材を大型株で持つ安定寄り枠。</td></tr>
+              <tr><td>TOWA</td><td class="code">6315</td><td>後工程・パッケージ装置</td><td>3,320円</td><td>100株</td><td>332,000円</td><td>16.6%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/6315.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6315" target="_blank" rel="noopener">株探</a></div></td><td>AI半導体の後工程・封止装置テーマ。</td></tr>
+              <tr><td>三菱重工業</td><td class="code">7011</td><td>冷却・電源</td><td>3,662円</td><td>100株</td><td>366,200円</td><td>18.3%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/7011.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=7011" target="_blank" rel="noopener">株探</a></div></td><td>DC冷却・電源、電力インフラ、防衛も含む大型株枠。</td></tr>
+              <tr><td>三機工業</td><td class="code">1961</td><td>建築設備・空調</td><td>2,975円</td><td>100株</td><td>297,500円</td><td>14.9%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/1961.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=1961" target="_blank" rel="noopener">株探</a></div></td><td>空調・電気・衛生などDC建設周辺の設備需要。</td></tr>
+              <tr><td>NTT</td><td class="code">9432</td><td>通信・DC基盤</td><td>145.2円</td><td>100株</td><td>14,520円</td><td>0.7%</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/9432.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=9432" target="_blank" rel="noopener">株探</a></div></td><td>通信・DC基盤の補助枠。少額でテーマ接点を追加。</td></tr>
+              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>62,280円</td><td>3.1%</td><td><span class="mark-muted">—</span></td><td>決算後の押し目、追加候補、リスク調整用。</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
       <section class="block">
-        <h2>モデルB: インフラ集中型</h2>
-        <p>予算をほぼ使い切り、AIデータセンターの電力・ケーブル・空調と半導体材料に寄せる案です。SWCCの比率が高くなるため、値動きの偏りには注意します。</p>
+        <h2>40万円以内の組み替え候補</h2>
         <div class="table-scroll">
           <table>
-            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>狙い</th></tr></thead>
+            <thead><tr><th>銘柄</th><th>最小投資金額</th><th>ニュース</th><th>入れる場合の考え方</th></tr></thead>
             <tbody>
-              <tr><td>SWCC</td><td class="code">5805</td><td>電線・光ファイバー・電力ケーブル</td><td>13,570円</td><td>100株</td><td>1,357,000円</td><td>67.9%</td><td>DC電力ケーブル、光通信、半導体周辺部材の複合テーマ。</td></tr>
-              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,896円</td><td>100株</td><td>289,600円</td><td>14.5%</td><td>空調・衛生・産業施設工事の受注進捗期待。</td></tr>
-              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,500円</td><td>100株</td><td>350,000円</td><td>17.5%</td><td>半導体材料でテーマ純度を補完。</td></tr>
-              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>3,400円</td><td>0.2%</td><td>ほぼ満額投資のため、追加余力はほぼなし。</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="block">
-        <h2>組み替え候補</h2>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>銘柄</th><th>最小投資金額</th><th>入れる場合の考え方</th></tr></thead>
-            <tbody>
-              <tr><td>明電舎</td><td>982,000円</td><td>電力インフラを厚くしたい場合の本命候補。ただし1単元で予算の約49%を使います。</td></tr>
-              <tr><td>野村マイクロ・サイエンス</td><td>495,000円</td><td>超純水テーマを入れたい場合。年初来高値圏のため、押し目確認を優先。</td></tr>
-              <tr><td>オルガノ</td><td>1,624,500円</td><td>超純水の本命級ですが、1単元で予算の約81%を使うため分散しにくいです。</td></tr>
-              <tr><td>芝浦メカトロニクス</td><td>451,500円</td><td>後工程・先端パッケージ装置を入れたい場合の差し替え候補。</td></tr>
+              <tr><td>ソシオネクスト</td><td>253,750円</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/6526.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6526" target="_blank" rel="noopener">株探</a></div></td><td>AI・カスタムSoC寄りの半導体メーカーを入れたい場合。</td></tr>
+              <tr><td>富士フイルムHD</td><td>347,000円</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/4901.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=4901" target="_blank" rel="noopener">株探</a></div></td><td>半導体材料を大型分散株で持ちたい場合。</td></tr>
+              <tr><td>日東電工</td><td>316,400円</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/6988.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=6988" target="_blank" rel="noopener">株探</a></div></td><td>電子材料・工程用テープなどの材料枠を追加する場合。</td></tr>
+              <tr><td>関東電化工業</td><td>355,500円</td><td><div class="news-links"><a class="news-link" href="https://finance.yahoo.co.jp/quote/4047.T/news" target="_blank" rel="noopener">Yahoo</a><a class="news-link" href="https://kabutan.jp/stock/news?code=4047" target="_blank" rel="noopener">株探</a></div></td><td>特殊ガス・半導体材料の値動きを取りたい場合。</td></tr>
             </tbody>
           </table>
         </div>
@@ -1260,6 +1408,7 @@
     <div class="shell">作成日: 2026年6月30日 / 対象: 日本国内株式のデータセンター関連・半導体関連テーマ</div>
   </footer>
 
+  <script src="data/technical-indicators.js"></script>
   <script>
     const tabs = Array.from(document.querySelectorAll(".tab"));
     const panels = Array.from(document.querySelectorAll(".panel"));
@@ -1271,6 +1420,13 @@
       ["opMargin", "営業利益率"], ["opMarginChange", "営業利益率増減"], ["grossMargin", "粗利率"], ["grossMarginChange", "粗利率増減"],
       ["recurringMargin", "経常利益率"], ["recurringMarginChange", "経常利益率増減"], ["netMargin", "純利益率"], ["netMarginChange", "純利益率増減"],
       ["backlog", "受注残"], ["backlogChange", "受注残増減"], ["inventoryChange", "在庫増減率"]
+    ];
+    const technicalColumns = [
+      ["ma5", "5日移動平均"], ["ma10", "10日移動平均"], ["ma25", "25日移動平均"], ["ma75", "75日移動平均"], ["ma100", "100日移動平均"], ["ma200", "200日移動平均"],
+      ["ma5Slope", "5日線上昇率"], ["ma10Slope", "10日線上昇率"], ["ma25Slope", "25日線上昇率"], ["ma75Slope", "75日線上昇率"], ["ma100Slope", "100日線上昇率"], ["ma200Slope", "200日線上昇率"],
+      ["ma5Divergence", "5日線乖離率"], ["ma10Divergence", "10日線乖離率"], ["ma25Divergence", "25日線乖離率"], ["ma75Divergence", "75日線乖離率"], ["ma200Divergence", "200日線乖離率"],
+      ["priceChange5", "5日株価上昇率"], ["priceChange10", "10日株価上昇率"], ["priceChange25", "25日株価上昇率"],
+      ["macd", "MACD"], ["rsi", "RSI"], ["zigzag7", "ZigZag 7"], ["zigzag20", "ZigZag 20"]
     ];
     const stockRows = [
       ["キオクシアHD","285A","半導体メーカー",88490],["アドバンテスト","6857","検査・テスター",32160],["日本電子材料","6855","検査・テスター",7890],["東京エレクトロン","8035","半導体製造装置",77280],
@@ -1296,6 +1452,7 @@
       ["ダイダン","1980","空調・設備工事",2868]
     ].map(([name, code, sector, price]) => ({ name, code, sector, price, minPurchase: price == null ? null : price * 100 }));
     let stockSort = { key: "code", direction: "asc" };
+    let technicalSort = { key: "code", direction: "asc" };
 
     function activateTab(id) {
       tabs.forEach((tab) => {
@@ -1321,9 +1478,46 @@
         return `${Number(value).toLocaleString("ja-JP")}円`;
       }
       if (key && (key.includes("Change") || key.includes("Margin") || ["roe", "roa", "roic", "dividend", "revenueGrowth", "inventoryChange"].includes(key))) {
-        return `${Number(value).toLocaleString("ja-JP")}%`;
+        return colorNumber(value, `${Number(value).toLocaleString("ja-JP")}%`);
       }
       return String(value);
+    }
+
+    function formatTechnicalValue(value, key) {
+      if (value == null || value === "") return "—";
+      if (key === "zigzag7" || key === "zigzag20") return trendBadge(value);
+      if (key === "currentPrice" || key.startsWith("ma")) {
+        if (key.includes("Slope") || key.includes("Divergence")) return colorNumber(value, `${Number(value).toLocaleString("ja-JP")}%`);
+        return `${Number(value).toLocaleString("ja-JP")}円`;
+      }
+      if (key.startsWith("priceChange")) return colorNumber(value, `${Number(value).toLocaleString("ja-JP")}%`);
+      if (key === "macd") return colorNumber(value, Number(value).toLocaleString("ja-JP"));
+      if (key === "rsi") return Number(value).toLocaleString("ja-JP");
+      return String(value);
+    }
+
+    function colorNumber(value, label) {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number === 0) return label;
+      const className = number > 0 ? "num-positive" : "num-negative";
+      return `<span class="${className}">${label}</span>`;
+    }
+
+    function trendBadge(value) {
+      if (value === "上昇中") return `<span class="trend-pill trend-up">上昇中</span>`;
+      if (value === "下降中") return `<span class="trend-pill trend-down">下降中</span>`;
+      if (value === "横ばい") return `<span class="trend-pill trend-flat">横ばい</span>`;
+      return "—";
+    }
+
+    function renderPriceDataTimestamp() {
+      const target = document.getElementById("priceDataTimestamp");
+      if (!target) return;
+      const raw = window.technicalFetchedAt;
+      if (!raw) return;
+      const date = new Date(raw);
+      if (Number.isNaN(date.getTime())) return;
+      target.textContent = `株価データ取得: ${date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}`;
     }
 
     function getStockValue(row, key) {
@@ -1377,8 +1571,125 @@
       });
     }
 
+    function getTechnicalValue(row, key) {
+      return row[key] ?? null;
+    }
+
+    function technicalFilterOptions(key) {
+      if (key === "rsi") {
+        return [
+          ["all", "すべて"],
+          ["rsiHigh", "70以上"],
+          ["rsiLow", "30以下"]
+        ];
+      }
+      return [
+        ["all", "すべて"],
+        ["positive", "プラスのみ"],
+        ["negative", "マイナスのみ"]
+      ];
+    }
+
+    function getTechnicalFilterSign(row, key) {
+      const value = getTechnicalValue(row, key);
+      if (key === "zigzag7" || key === "zigzag20") {
+        if (value === "上昇中") return 1;
+        if (value === "下降中") return -1;
+        return 0;
+      }
+      const number = Number(value);
+      if (!Number.isFinite(number)) return null;
+      if (number > 0) return 1;
+      if (number < 0) return -1;
+      return 0;
+    }
+
+    function matchesTechnicalFilter(row, key, filter) {
+      if (filter === "all") return true;
+      const value = getTechnicalValue(row, key);
+      if (key === "rsi") {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return false;
+        if (filter === "rsiHigh") return number >= 70;
+        if (filter === "rsiLow") return number <= 30;
+      }
+      const sign = getTechnicalFilterSign(row, key);
+      if (sign == null) return false;
+      if (filter === "positive") return sign > 0;
+      if (filter === "negative") return sign < 0;
+      return true;
+    }
+
+    function renderTechnicalControls() {
+      const controls = document.getElementById("technicalControls");
+      if (!controls) return;
+      controls.innerHTML = technicalColumns.map(([key, label]) => (
+        `<div class="metric-filter">
+          <label><input type="checkbox" value="${key}">${label}</label>
+          <select data-filter="${key}" aria-label="${label}のスクリーニング">
+            ${technicalFilterOptions(key).map(([value, text]) => `<option value="${value}">${text}</option>`).join("")}
+          </select>
+        </div>`
+      )).join("");
+      controls.addEventListener("change", renderTechnicalTable);
+    }
+
+    function renderTechnicalTable() {
+      const table = document.getElementById("technicalTable");
+      if (!table) return;
+      const rows = window.technicalRows || [];
+      const checked = Array.from(document.querySelectorAll("#technicalControls input:checked")).map((input) => input.value);
+      const screenMode = document.querySelector("input[name='technicalScreenMode']:checked")?.value || "and";
+      const activeFilters = checked.map((key) => ({
+        key,
+        filter: document.querySelector(`#technicalControls select[data-filter="${key}"]`)?.value || "all"
+      })).filter((item) => item.filter !== "all");
+      const baseColumns = [
+        ["name", "銘柄名"], ["code", "コード"], ["currentPrice", "現在株価"], ["sector", "セクタ"]
+      ];
+      const activeColumns = baseColumns.concat(technicalColumns.filter(([key]) => checked.includes(key)));
+      const filteredRows = activeFilters.length === 0 ? rows : rows.filter((row) => {
+        const results = activeFilters.map(({ key, filter }) => matchesTechnicalFilter(row, key, filter));
+        return screenMode === "or" ? results.some(Boolean) : results.every(Boolean);
+      });
+      const sortedRows = [...filteredRows].sort((a, b) => {
+        const av = getTechnicalValue(a, technicalSort.key);
+        const bv = getTechnicalValue(b, technicalSort.key);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        const result = typeof av === "number" && typeof bv === "number"
+          ? av - bv
+          : String(av).localeCompare(String(bv), "ja");
+        return technicalSort.direction === "asc" ? result : -result;
+      });
+      table.querySelector("thead").innerHTML = `<tr>${activeColumns.map(([key, label]) => {
+        const active = technicalSort.key === key ? ` sort-active ${technicalSort.direction}` : "";
+        return `<th class="sortable${active}" data-sort="${key}">${label}</th>`;
+      }).join("")}</tr>`;
+      table.querySelector("tbody").innerHTML = sortedRows.map((row) => (
+        `<tr>${activeColumns.map(([key]) => `<td>${formatTechnicalValue(getTechnicalValue(row, key), key)}</td>`).join("")}</tr>`
+      )).join("");
+      table.querySelectorAll("th.sortable").forEach((th) => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.sort;
+          technicalSort = {
+            key,
+            direction: technicalSort.key === key && technicalSort.direction === "asc" ? "desc" : "asc"
+          };
+          renderTechnicalTable();
+        });
+      });
+    }
+
     renderMetricControls();
     renderStockListTable();
+    renderTechnicalControls();
+    document.querySelectorAll("input[name='technicalScreenMode']").forEach((input) => {
+      input.addEventListener("change", renderTechnicalTable);
+    });
+    renderTechnicalTable();
+    renderPriceDataTimestamp();
   </script>
 </body>
 </html>
