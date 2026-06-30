@@ -1504,6 +1504,15 @@
           </table>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜700営業日前の676期間。各期間で2条件・3条件の組み合わせをテストし、最も効果的だった条件、抽出銘柄数、平均騰落率、勝率を表示します。</p>
+        <h3>スクリーニング設定別分析</h3>
+        <p>上の日別最適化で実際に採用された条件セットをパターン化し、各パターンを25〜700営業日前の全期間に固定適用した場合の成績を比較します。</p>
+        <div class="grid" id="screeningPatternSummary"></div>
+        <div class="table-scroll">
+          <table id="screeningPatternTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </section>
     </article>
 
@@ -2662,16 +2671,46 @@
       };
     }
 
+    function screeningComboKey(keys) {
+      return keys.join("|");
+    }
+
+    function summarizeScreeningEvaluations(evaluations) {
+      const valid = evaluations.filter(Boolean);
+      if (!valid.length) return null;
+      const hitCount = valid.reduce((sum, result) => sum + result.count, 0);
+      return {
+        testedPeriods: valid.length,
+        hitCount,
+        averageHitCount: hitCount / valid.length,
+        averageWinRate: valid.reduce((sum, result) => sum + result.winRate, 0) / valid.length,
+        averageReturn: valid.reduce((sum, result) => sum + result.averageReturn, 0) / valid.length,
+        positivePeriodRate: valid.filter((result) => result.averageReturn > 0).length / valid.length * 100
+      };
+    }
+
     function getScreeningTestResults() {
       const combos = [
         ...buildSignalCombinations(aiSignalDefinitions, 2),
         ...buildSignalCombinations(aiSignalDefinitions, 3)
       ];
+      const comboStats = new Map(combos.map((combo) => {
+        const keys = combo.map(([key]) => key);
+        return [screeningComboKey(keys), {
+          keys,
+          labels: combo.map(([, label]) => label),
+          evaluations: []
+        }];
+      }));
       const results = Array.from({ length: 676 }, (_, index) => 25 + index).map((startLookback) => {
         const candidates = combos
           .map((combo) => evaluateScreeningCombinationAtLookback(combo, startLookback))
           .filter(Boolean)
-          .filter((result) => result.count >= 3)
+          .filter((result) => result.count >= 3);
+        candidates.forEach((candidate) => {
+          comboStats.get(screeningComboKey(candidate.keys))?.evaluations.push(candidate);
+        });
+        candidates
           .sort((a, b) => b.averageReturn - a.averageReturn || b.winRate - a.winRate || b.count - a.count);
         return {
           startLookback,
@@ -2680,14 +2719,41 @@
           testedCombinations: candidates.length
         };
       });
-      return { combos, results };
+      const validResults = results.filter((result) => result.best);
+      const dailyOptimization = {
+        key: "daily-optimization",
+        type: "日別最適化",
+        labels: ["各日の最上位条件を採用"],
+        adoptedPeriods: validResults.length,
+        ...summarizeScreeningEvaluations(validResults.map((result) => result.best))
+      };
+      const usedPatternKeys = new Set(validResults.map((result) => screeningComboKey(result.best.keys)));
+      const adoptedCounts = validResults.reduce((counts, result) => {
+        const key = screeningComboKey(result.best.keys);
+        counts.set(key, (counts.get(key) || 0) + 1);
+        return counts;
+      }, new Map());
+      const patternResults = Array.from(comboStats.entries())
+        .filter(([key]) => usedPatternKeys.has(key))
+        .map(([key, stat]) => ({
+          key,
+          type: "固定パターン",
+          labels: stat.labels,
+          adoptedPeriods: adoptedCounts.get(key) || 0,
+          ...summarizeScreeningEvaluations(stat.evaluations)
+        }))
+        .filter((row) => row.testedPeriods)
+        .sort((a, b) => b.averageReturn - a.averageReturn || b.averageWinRate - a.averageWinRate || b.adoptedPeriods - a.adoptedPeriods);
+      return { combos, results, dailyOptimization, patternResults };
     }
 
     function renderScreeningTest() {
       const table = document.getElementById("screeningTestTable");
       const summary = document.getElementById("screeningTestSummary");
-      if (!table || !summary) return;
-      const { combos, results } = getScreeningTestResults();
+      const patternTable = document.getElementById("screeningPatternTable");
+      const patternSummary = document.getElementById("screeningPatternSummary");
+      if (!table || !summary || !patternTable || !patternSummary) return;
+      const { combos, results, dailyOptimization, patternResults } = getScreeningTestResults();
       const totalCombos = combos.length;
       const validResults = results.filter((result) => result.best);
       const averageOfBest = validResults.length
@@ -2727,6 +2793,34 @@
           openScreeningStockPopup(Number(button.dataset.screeningLookback));
         });
       });
+      renderScreeningPatternAnalysis(patternTable, patternSummary, dailyOptimization, patternResults);
+    }
+
+    function renderScreeningPatternAnalysis(table, summary, dailyOptimization, patternResults) {
+      const rows = [dailyOptimization, ...patternResults].filter(Boolean);
+      const bestFixed = patternResults[0] || null;
+      summary.innerHTML = [
+        `<div class="mini"><span class="tag">日別最適化</span><b>${dailyOptimization?.testedPeriods || 0}期間 / ${dailyOptimization?.hitCount || 0}ヒット</b><p>各基準日で最も平均騰落率が高かった条件を採用した保存結果です。</p></div>`,
+        `<div class="mini"><span class="tag warn">使用パターン</span><b>${patternResults.length}種類</b><p>日別最適化で一度以上採用された条件セットだけを固定条件として再集計します。</p></div>`,
+        `<div class="mini"><span class="tag dark">固定条件トップ</span><b>${bestFixed ? `${bestFixed.labels.join(" + ")} / ${bestFixed.averageReturn.toFixed(2)}%` : "—"}</b><p>25〜700営業日前の全期間に固定適用した平均騰落率の上位です。</p></div>`
+      ].join("");
+      table.querySelector("thead").innerHTML = `<tr>
+        <th>区分</th><th>スクリーニング設定</th><th>日別採用</th><th>検証期間</th><th>ヒット銘柄数</th><th>平均ヒット銘柄数</th><th>平均勝率</th><th>平均騰落率</th><th>プラス期間率</th>
+      </tr>`;
+      table.querySelector("tbody").innerHTML = rows.map((row, index) => {
+        const isDaily = row.type === "日別最適化";
+        return `<tr>
+          <td>${isDaily ? "日別最適化" : `パターン${index}`}</td>
+          <td>${row.labels.join("<br>")}</td>
+          <td>${row.adoptedPeriods}期間</td>
+          <td>${row.testedPeriods}期間</td>
+          <td>${row.hitCount.toLocaleString("ja-JP")}銘柄</td>
+          <td>${row.averageHitCount.toFixed(1)}銘柄</td>
+          <td>${row.averageWinRate.toFixed(1)}%</td>
+          <td>${colorNumber(row.averageReturn, `${row.averageReturn.toFixed(2)}%`)}</td>
+          <td>${row.positivePeriodRate.toFixed(1)}%</td>
+        </tr>`;
+      }).join("");
     }
 
     function openScreeningStockPopup(startLookback) {
