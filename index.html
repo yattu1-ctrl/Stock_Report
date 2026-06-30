@@ -1352,14 +1352,14 @@
             <tbody></tbody>
           </table>
         </div>
-        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜99営業日前の75期間。各期間で2条件・3条件の組み合わせをテストし、最も効果的だった条件、抽出銘柄数、平均騰落率、勝率を表示します。</p>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜700営業日前の676期間。各期間で2条件・3条件の組み合わせをテストし、最も効果的だった条件、抽出銘柄数、平均騰落率、勝率を表示します。</p>
       </section>
     </article>
 
     <article class="panel" id="nikkei-correlation">
       <section class="block">
         <h2>日経平均相関</h2>
-        <p>スクリーニングテストの75期間について、同期間の日経平均騰落率と比較し、日経平均の状態によって勝率・騰落率がどう変わるかを確認します。</p>
+        <p>スクリーニングテストの676期間について、同期間の日経平均騰落率と比較し、日経平均の状態によって勝率・騰落率がどう変わるかを確認します。</p>
         <div class="grid" id="nikkeiCorrelationSummary"></div>
         <div class="table-scroll">
           <table id="nikkeiCorrelationTable">
@@ -2472,7 +2472,7 @@
         ...buildSignalCombinations(aiSignalDefinitions, 2),
         ...buildSignalCombinations(aiSignalDefinitions, 3)
       ];
-      const results = Array.from({ length: 75 }, (_, index) => 25 + index).map((startLookback) => {
+      const results = Array.from({ length: 676 }, (_, index) => 25 + index).map((startLookback) => {
         const candidates = combos
           .map((combo) => evaluateScreeningCombinationAtLookback(combo, startLookback))
           .filter(Boolean)
@@ -2502,9 +2502,9 @@
         ? validResults.filter((result) => result.best.averageReturn > 0).length / validResults.length * 100
         : null;
       summary.innerHTML = [
-        `<div class="mini"><span class="tag">検証範囲</span><b>25〜99営業日前の75期間</b><p>各基準日から25営業日後までの騰落率を、1日ずつ遡って検証します。</p></div>`,
+        `<div class="mini"><span class="tag">検証範囲</span><b>25〜700営業日前の676期間</b><p>各基準日から25営業日後までの騰落率を、1日ずつ遡って検証します。</p></div>`,
         `<div class="mini"><span class="tag warn">組み合わせ</span><b>${totalCombos}通り</b><p>各期間で2条件・3条件ANDを全て試し、抽出3銘柄以上の最上位条件を採用します。</p></div>`,
-        `<div class="mini"><span class="tag dark">75期間サマリー</span><b>${averageOfBest == null ? "—" : `平均 ${colorNumber(averageOfBest, `${averageOfBest.toFixed(2)}%`)} / 勝率 ${winRateOfBest.toFixed(1)}%`}</b><p>各期間の最上位条件だけを並べた場合の平均です。</p></div>`
+        `<div class="mini"><span class="tag dark">676期間サマリー</span><b>${averageOfBest == null ? "—" : `平均 ${colorNumber(averageOfBest, `${averageOfBest.toFixed(2)}%`)} / 勝率 ${winRateOfBest.toFixed(1)}%`}</b><p>各期間の最上位条件だけを並べた場合の平均です。</p></div>`
       ].join("");
       table.querySelector("thead").innerHTML = `<tr>
         <th>基準日</th><th>検証期間</th><th>最上位スクリーニング条件</th><th>抽出銘柄数</th><th>平均騰落率</th><th>勝率</th><th>最大上昇</th><th>最大下落</th>
