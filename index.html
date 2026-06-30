@@ -1595,8 +1595,8 @@
       ["ma5Divergence", "5日線乖離率"], ["ma10Divergence", "10日線乖離率"], ["ma25Divergence", "25日線乖離率"], ["ma75Divergence", "75日線乖離率"], ["ma200Divergence", "200日線乖離率"],
       ["priceChange5", "5日株価上昇率"], ["priceChange10", "10日株価上昇率"], ["priceChange25", "25日株価上昇率"],
       ["macd", "MACD"], ["macdHistogram", "MACDヒストグラム"], ["rsi", "RSI"],
-      ["zigzag7", "ZigZag 7"], ["zigzag7RecentExtreme", "ZigZag7 直近高値/安値"], ["zigzag7TurnPrice", "ZigZag7 転換目安"],
-      ["zigzag20", "ZigZag 20"], ["zigzag20RecentExtreme", "ZigZag20 直近高値/安値"], ["zigzag20TurnPrice", "ZigZag20 転換目安"]
+      ["zigzag7", "ZigZag 7"], ["zigzag7TurnPrice", "ZigZag7 転換目安"], ["zigzag7RecentExtreme", "ZigZag7 直近節目"],
+      ["zigzag20", "ZigZag 20"], ["zigzag20TurnPrice", "ZigZag20 転換目安"], ["zigzag20RecentExtreme", "ZigZag20 直近節目"]
     ];
     const stockRows = [
       ["キオクシアHD","285A","半導体メーカー",88490],["アドバンテスト","6857","検査・テスター",32160],["日本電子材料","6855","検査・テスター",7890],["東京エレクトロン","8035","半導体製造装置",77280],
@@ -2126,12 +2126,12 @@
       ];
       const visibleKeys = new Set(checked);
       if (visibleKeys.has("zigzag7")) {
-        visibleKeys.add("zigzag7RecentExtreme");
         visibleKeys.add("zigzag7TurnPrice");
+        visibleKeys.add("zigzag7RecentExtreme");
       }
       if (visibleKeys.has("zigzag20")) {
-        visibleKeys.add("zigzag20RecentExtreme");
         visibleKeys.add("zigzag20TurnPrice");
+        visibleKeys.add("zigzag20RecentExtreme");
       }
       const activeColumns = baseColumns.concat(technicalColumns.filter(([key]) => visibleKeys.has(key)));
       const sectorRows = selectedSector ? rows.filter((row) => row.sector === selectedSector) : rows;
