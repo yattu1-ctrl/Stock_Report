@@ -1229,6 +1229,9 @@
           <label><input type="radio" name="technicalScreenMode" value="and" checked>AND</label>
           <label><input type="radio" name="technicalScreenMode" value="or">OR</label>
           <label>セクタ<select id="technicalSectorFilter"><option value="">すべて</option></select></label>
+          <label><input type="checkbox" class="technical-ma-pattern" value="maOrder5">MA順 5/10/25/75/200</label>
+          <label><input type="checkbox" class="technical-ma-pattern" value="maOrder10With75_200Up">MA順 10/5/25/75/200 + 75/200上昇</label>
+          <label><input type="checkbox" class="technical-ma-pattern" value="maOrder5With10_75_200Up">MA順 5/10/25/75/200 + 10/75/200上昇</label>
         </div>
         <div class="table-controls" id="technicalControls" aria-label="表示するテクニカル指標列"></div>
         <div class="table-scroll">
@@ -1902,6 +1905,34 @@
       return true;
     }
 
+    function isMaOrder(row, keys) {
+      const values = keys.map((key) => Number(getTechnicalValue(row, key)));
+      if (values.some((value) => !Number.isFinite(value))) return false;
+      return values.every((value, index) => index === 0 || values[index - 1] > value);
+    }
+
+    function isSlopeUp(row, keys) {
+      return keys.every((key) => {
+        const value = Number(getTechnicalValue(row, key));
+        return Number.isFinite(value) && value > 0;
+      });
+    }
+
+    function matchesTechnicalPattern(row, pattern) {
+      if (pattern === "maOrder5") {
+        return isMaOrder(row, ["ma5", "ma10", "ma25", "ma75", "ma200"]);
+      }
+      if (pattern === "maOrder10With75_200Up") {
+        return isMaOrder(row, ["ma10", "ma5", "ma25", "ma75", "ma200"])
+          && isSlopeUp(row, ["ma75Slope", "ma200Slope"]);
+      }
+      if (pattern === "maOrder5With10_75_200Up") {
+        return isMaOrder(row, ["ma5", "ma10", "ma25", "ma75", "ma200"])
+          && isSlopeUp(row, ["ma10Slope", "ma75Slope", "ma200Slope"]);
+      }
+      return true;
+    }
+
     function renderTechnicalControls() {
       const controls = document.getElementById("technicalControls");
       if (!controls) return;
@@ -2124,6 +2155,7 @@
       const checked = Array.from(document.querySelectorAll("#technicalControls input:checked")).map((input) => input.value);
       const screenMode = document.querySelector("input[name='technicalScreenMode']:checked")?.value || "and";
       const selectedSector = document.getElementById("technicalSectorFilter")?.value || "";
+      const activePatterns = Array.from(document.querySelectorAll(".technical-ma-pattern:checked")).map((input) => input.value);
       const activeFilters = checked.map((key) => ({
         key,
         filter: document.querySelector(`#technicalControls select[data-filter="${key}"]`)?.value || "all"
@@ -2142,8 +2174,11 @@
       }
       const activeColumns = baseColumns.concat(technicalColumns.filter(([key]) => visibleKeys.has(key)));
       const sectorRows = selectedSector ? rows.filter((row) => row.sector === selectedSector) : rows;
-      const filteredRows = activeFilters.length === 0 ? sectorRows : sectorRows.filter((row) => {
-        const results = activeFilters.map(({ key, filter }) => matchesTechnicalFilter(row, key, filter));
+      const filteredRows = activeFilters.length === 0 && activePatterns.length === 0 ? sectorRows : sectorRows.filter((row) => {
+        const results = [
+          ...activeFilters.map(({ key, filter }) => matchesTechnicalFilter(row, key, filter)),
+          ...activePatterns.map((pattern) => matchesTechnicalPattern(row, pattern))
+        ];
         return screenMode === "or" ? results.some(Boolean) : results.every(Boolean);
       });
       const sortedRows = [...filteredRows].sort((a, b) => {
@@ -2197,6 +2232,9 @@
       input.addEventListener("change", renderStockListTable);
     });
     document.querySelectorAll("input[name='technicalScreenMode']").forEach((input) => {
+      input.addEventListener("change", renderTechnicalTable);
+    });
+    document.querySelectorAll(".technical-ma-pattern").forEach((input) => {
       input.addEventListener("change", renderTechnicalTable);
     });
     document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartZigzag7, #chartZigzag20").forEach((input) => {
