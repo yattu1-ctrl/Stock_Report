@@ -458,6 +458,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="datacenter" data-tab="datacenter">データセンター関連</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="semiconductor" data-tab="semiconductor">半導体関連</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="candidates" data-tab="candidates">候補銘柄</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="decision" data-tab="decision">判断チェック</button>
@@ -906,6 +907,81 @@
       <section class="block">
         <h2>逆に未織り込みとは言いにくい銘柄</h2>
         <p>アドバンテスト、ディスコ、東京エレクトロン、レーザーテック、イビデン、フジクラなどは、AI・半導体相場の中心として買われやすい銘柄です。ここからは「好材料が未織り込み」ではなく、さらなる上方修正・受注増・利益率改善が出るかを見る局面です。</p>
+      </section>
+    </article>
+
+    <article class="panel" id="portfolio">
+      <section class="block">
+        <h2>予算200万円でのポートフォリオ</h2>
+        <p>候補銘柄の現在株価と単元株数100株を前提に、2,000,000円以内で組めるモデル配分です。単元株の制約が大きいため、分散度とテーマ純度のどちらを優先するかで形が変わります。</p>
+        <div class="grid">
+          <div class="mini">
+            <span class="tag">分散型</span>
+            <b>4銘柄 + 現金余力</b>
+            <p>投資額 1,719,400円。残余現金 280,600円。周辺インフラ、検査、材料、通信部材に分ける案です。</p>
+          </div>
+          <div class="mini">
+            <span class="tag warn">集中型</span>
+            <b>3銘柄でほぼ満額</b>
+            <p>投資額 1,996,600円。残余現金 3,400円。SWCCを大きく入れ、電力・ケーブル色を強める案です。</p>
+          </div>
+          <div class="mini">
+            <span class="tag dark">前提</span>
+            <b>2026年6月30日株価</b>
+            <p>候補銘柄表と同じ株価を使用。手数料、税金、スプレッド、単元未満株は考慮していません。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>モデルA: 分散型</h2>
+        <p>値がさ株を避け、4銘柄に分ける案です。明電舎、SWCC、オルガノは1単元の金額が大きいため、ここでは外しています。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>狙い</th></tr></thead>
+            <tbody>
+              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,896円</td><td>100株</td><td>289,600円</td><td>14.5%</td><td>半導体工場・DC設備投資の周辺需要。</td></tr>
+              <tr><td>日本電子材料</td><td class="code">6855</td><td>プローブカード</td><td>7,870円</td><td>100株</td><td>787,000円</td><td>39.4%</td><td>HBM・先端半導体検査の高純度テーマ。</td></tr>
+              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,500円</td><td>100株</td><td>350,000円</td><td>17.5%</td><td>次世代半導体材料と台湾向け出荷。</td></tr>
+              <tr><td>住友電工</td><td class="code">5802</td><td>光ファイバー・通信部材</td><td>2,928円</td><td>100株</td><td>292,800円</td><td>14.6%</td><td>DC通信部材を大型株で持つ安定寄り枠。</td></tr>
+              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>280,600円</td><td>14.0%</td><td>決算後の押し目、追加候補、リスク調整用。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>モデルB: インフラ集中型</h2>
+        <p>予算をほぼ使い切り、AIデータセンターの電力・ケーブル・空調と半導体材料に寄せる案です。SWCCの比率が高くなるため、値動きの偏りには注意します。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>コード</th><th>テーマ</th><th>株価</th><th>株数</th><th>投資金額</th><th>比率</th><th>狙い</th></tr></thead>
+            <tbody>
+              <tr><td>SWCC</td><td class="code">5805</td><td>電線・光ファイバー・電力ケーブル</td><td>13,570円</td><td>100株</td><td>1,357,000円</td><td>67.9%</td><td>DC電力ケーブル、光通信、半導体周辺部材の複合テーマ。</td></tr>
+              <tr><td>ダイダン</td><td class="code">1980</td><td>空調・設備工事</td><td>2,896円</td><td>100株</td><td>289,600円</td><td>14.5%</td><td>空調・衛生・産業施設工事の受注進捗期待。</td></tr>
+              <tr><td>トリケミカル研究所</td><td class="code">4369</td><td>半導体材料</td><td>3,500円</td><td>100株</td><td>350,000円</td><td>17.5%</td><td>半導体材料でテーマ純度を補完。</td></tr>
+              <tr><td>現金</td><td class="code">—</td><td>待機資金</td><td>—</td><td>—</td><td>3,400円</td><td>0.2%</td><td>ほぼ満額投資のため、追加余力はほぼなし。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>組み替え候補</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>銘柄</th><th>最小投資金額</th><th>入れる場合の考え方</th></tr></thead>
+            <tbody>
+              <tr><td>明電舎</td><td>982,000円</td><td>電力インフラを厚くしたい場合の本命候補。ただし1単元で予算の約49%を使います。</td></tr>
+              <tr><td>野村マイクロ・サイエンス</td><td>495,000円</td><td>超純水テーマを入れたい場合。年初来高値圏のため、押し目確認を優先。</td></tr>
+              <tr><td>オルガノ</td><td>1,624,500円</td><td>超純水の本命級ですが、1単元で予算の約81%を使うため分散しにくいです。</td></tr>
+              <tr><td>芝浦メカトロニクス</td><td>451,500円</td><td>後工程・先端パッケージ装置を入れたい場合の差し替え候補。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <p>このページは予算制約を可視化するモデルであり、売買推奨ではありません。実際には決算日、信用需給、株価位置、損切り条件、1銘柄あたりの最大比率を先に決めてから使います。</p>
+        </div>
       </section>
     </article>
 
