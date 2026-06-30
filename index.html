@@ -572,6 +572,20 @@
       font-weight: 800;
     }
 
+    .chart-open-button {
+      min-height: 30px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 3px 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
     #technicalTable tbody tr {
       cursor: pointer;
     }
@@ -1649,6 +1663,9 @@
     }
 
     function formatTechnicalCell(row, key) {
+      if (key === "chartAction") {
+        return `<button class="chart-open-button" type="button" data-code="${row.code}">開く</button>`;
+      }
       const value = getTechnicalValue(row, key);
       const base = formatTechnicalValue(value, key);
       if ((key === "zigzag7" || key === "zigzag20") && row[`${key}Changed`]) {
@@ -1930,6 +1947,11 @@
       return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
     }
 
+    function openChartTab(code) {
+      if (!code) return;
+      window.open(`chart.html?code=${encodeURIComponent(code)}`, "_blank", "noopener");
+    }
+
     function renderChart() {
       const stage = document.getElementById("chartStage");
       const title = document.getElementById("chartTitle");
@@ -2028,7 +2050,7 @@
         filter: document.querySelector(`#technicalControls select[data-filter="${key}"]`)?.value || "all"
       })).filter((item) => item.filter !== "all");
       const baseColumns = [
-        ["name", "銘柄名"], ["code", "コード"], ["currentPrice", "現在株価"], ["sector", "セクタ"]
+        ["chartAction", "チャート"], ["name", "銘柄名"], ["code", "コード"], ["currentPrice", "現在株価"], ["sector", "セクタ"]
       ];
       const visibleKeys = new Set(checked);
       if (visibleKeys.has("zigzag7")) {
@@ -2056,6 +2078,7 @@
         return technicalSort.direction === "asc" ? result : -result;
       });
       table.querySelector("thead").innerHTML = `<tr>${activeColumns.map(([key, label]) => {
+        if (key === "chartAction") return `<th>${label}</th>`;
         const active = technicalSort.key === key ? ` sort-active ${technicalSort.direction}` : "";
         return `<th class="sortable${active}" data-sort="${key}">${label}</th>`;
       }).join("")}</tr>`;
@@ -2074,8 +2097,13 @@
       });
       table.querySelectorAll("tbody tr").forEach((tr) => {
         tr.addEventListener("click", () => {
-          selectedChartCode = tr.dataset.code;
-          renderChart();
+          openChartTab(tr.dataset.code);
+        });
+      });
+      table.querySelectorAll(".chart-open-button").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openChartTab(button.dataset.code);
         });
       });
     }

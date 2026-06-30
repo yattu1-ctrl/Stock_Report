@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>チャート表示 | データセンター・半導体 投資判断ツール</title>
+  <style>
+    :root {
+      --bg: #f4f7f5;
+      --surface: #ffffff;
+      --ink: #18211f;
+      --muted: #63716d;
+      --line: #d9e1dd;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --accent-3: #334155;
+      --soft: #e7f4f1;
+      --shadow: 0 18px 50px rgba(24, 33, 31, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+      line-height: 1.6;
+    }
+
+    .shell {
+      width: min(1920px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(244, 247, 245, .94);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      color: var(--accent-3);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      white-space: nowrap;
+    }
+
+    select {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent-3);
+      font: inherit;
+      font-weight: 800;
+      padding: 3px 8px;
+    }
+
+    main {
+      padding: 18px 0 28px;
+    }
+
+    .chart-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .chart-stage {
+      min-height: 620px;
+      overflow-x: auto;
+    }
+
+    .chart-stage svg {
+      display: block;
+      width: 100%;
+      min-width: 1200px;
+      height: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .placeholder {
+      display: grid;
+      place-items: center;
+      min-height: 560px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell toolbar">
+      <h1 id="chartTitle">チャート</h1>
+      <div class="controls" aria-label="チャート設定">
+        <label>銘柄<select id="stockSelect"></select></label>
+        <label><input type="radio" name="chartPeriod" value="daily" checked>日足</label>
+        <label><input type="radio" name="chartPeriod" value="weekly">週足</label>
+        <label><input type="radio" name="chartPeriod" value="monthly">月足</label>
+        <label><input type="checkbox" class="chart-ma" value="5" checked>5日線</label>
+        <label><input type="checkbox" class="chart-ma" value="10">10日線</label>
+        <label><input type="checkbox" class="chart-ma" value="25" checked>25日線</label>
+        <label><input type="checkbox" class="chart-ma" value="75">75日線</label>
+        <label><input type="checkbox" class="chart-ma" value="200">200日線</label>
+        <label><input type="checkbox" id="chartRsi">RSI</label>
+        <label><input type="checkbox" id="chartMacd">MACD</label>
+        <label><input type="checkbox" id="chartZigzag7">ZigZag(7)</label>
+        <label><input type="checkbox" id="chartZigzag20">ZigZag(20)</label>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="chart-card">
+      <div class="chart-stage" id="chartStage">
+        <div class="placeholder">チャートを読み込み中です</div>
+      </div>
+      <div class="meta" id="chartMeta"></div>
+    </section>
+  </main>
+
+  <script src="data/technical-indicators.js"></script>
+  <script src="data/price-history-200d.js"></script>
+  <script>
+    const title = document.getElementById("chartTitle");
+    const stage = document.getElementById("chartStage");
+    const meta = document.getElementById("chartMeta");
+    const select = document.getElementById("stockSelect");
+    let selectedCode = new URLSearchParams(location.search).get("code");
+
+    function aggregateHistory(rows, period) {
+      if (period === "daily") return rows;
+      const groups = new Map();
+      rows.forEach((row) => {
+        const date = new Date(`${row.d}T00:00:00+09:00`);
+        let key;
+        if (period === "monthly") {
+          key = row.d.slice(0, 7);
+        } else {
+          const monday = new Date(date);
+          const day = monday.getDay() || 7;
+          monday.setDate(monday.getDate() - day + 1);
+          key = monday.toISOString().slice(0, 10);
+        }
+        if (!groups.has(key)) {
+          groups.set(key, { d: row.d, o: row.o, h: row.h, l: row.l, c: row.c, v: row.v || 0 });
+          return;
+        }
+        const group = groups.get(key);
+        group.h = Math.max(group.h, row.h);
+        group.l = Math.min(group.l, row.l);
+        group.c = row.c;
+        group.v += row.v || 0;
+        group.d = row.d;
+      });
+      return Array.from(groups.values());
+    }
+
+    function movingAverage(values, span) {
+      return values.map((_, index) => {
+        if (index < span - 1) return null;
+        const slice = values.slice(index - span + 1, index + 1);
+        return slice.reduce((sum, value) => sum + value, 0) / span;
+      });
+    }
+
+    function ema(values, span) {
+      const k = 2 / (span + 1);
+      return values.reduce((acc, value, index) => {
+        acc.push(index === 0 ? value : value * k + acc[index - 1] * (1 - k));
+        return acc;
+      }, []);
+    }
+
+    function macdValues(closes) {
+      const ema12 = ema(closes, 12);
+      const ema26 = ema(closes, 26);
+      return closes.map((_, index) => ema12[index] - ema26[index]);
+    }
+
+    function rsiValues(closes, span = 14) {
+      return closes.map((_, index) => {
+        if (index < span) return null;
+        let gains = 0;
+        let losses = 0;
+        for (let i = index - span + 1; i <= index; i += 1) {
+          const diff = closes[i] - closes[i - 1];
+          if (diff >= 0) gains += diff;
+          else losses -= diff;
+        }
+        if (losses === 0) return 100;
+        const rs = gains / losses;
+        return 100 - (100 / (1 + rs));
+      });
+    }
+
+    function zigzagPoints(rows, depth) {
+      const pivots = [];
+      for (let i = depth; i < rows.length - depth; i += 1) {
+        const windowRows = rows.slice(i - depth, i + depth + 1);
+        const high = Math.max(...windowRows.map((row) => row.h));
+        const low = Math.min(...windowRows.map((row) => row.l));
+        if (rows[i].h === high) pivots.push({ index: i, value: rows[i].h });
+        if (rows[i].l === low) pivots.push({ index: i, value: rows[i].l });
+      }
+      return pivots.filter((point, index, array) => index === 0 || point.index !== array[index - 1].index);
+    }
+
+    function svgPath(points) {
+      return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+    }
+
+    function populateStocks() {
+      const rows = window.technicalRows || [];
+      select.innerHTML = rows.map((row) => (
+        `<option value="${row.code}">${row.name} (${row.code})</option>`
+      )).join("");
+      if (!selectedCode || !rows.some((row) => String(row.code) === String(selectedCode))) {
+        selectedCode = rows[0]?.code || "";
+      }
+      select.value = selectedCode;
+    }
+
+    function renderChart() {
+      const rows = window.priceHistoryRows?.[selectedCode] || [];
+      const stock = (window.technicalRows || []).find((row) => String(row.code) === String(selectedCode));
+      if (!rows.length) {
+        stage.innerHTML = `<div class="placeholder">チャート用データがありません</div>`;
+        title.textContent = "チャート";
+        return;
+      }
+      const period = document.querySelector("input[name='chartPeriod']:checked")?.value || "daily";
+      const data = aggregateHistory(rows, period).slice(-180);
+      const closes = data.map((row) => row.c);
+      const selectedMas = Array.from(document.querySelectorAll(".chart-ma:checked")).map((input) => Number(input.value));
+      const showRsi = document.getElementById("chartRsi").checked;
+      const showMacd = document.getElementById("chartMacd").checked;
+      const showZigzag7 = document.getElementById("chartZigzag7").checked;
+      const showZigzag20 = document.getElementById("chartZigzag20").checked;
+      const width = 1780;
+      const mainHeight = 500;
+      const subHeight = 130;
+      const top = 26;
+      const left = 68;
+      const right = 34;
+      const chartWidth = width - left - right;
+      const panels = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
+      const height = top + mainHeight + (panels - 1) * subHeight + 44;
+      const x = (index) => left + (data.length <= 1 ? 0 : index * chartWidth / (data.length - 1));
+      const maSeries = Object.fromEntries(selectedMas.map((span) => [span, movingAverage(closes, span)]));
+      const priceValues = data.flatMap((row) => [row.h, row.l]).concat(Object.values(maSeries).flat().filter(Number.isFinite));
+      const minPrice = Math.min(...priceValues);
+      const maxPrice = Math.max(...priceValues);
+      const pad = Math.max((maxPrice - minPrice) * 0.08, 1);
+      const yPrice = (value) => top + (maxPrice + pad - value) * mainHeight / (maxPrice - minPrice + pad * 2);
+      const candleWidth = Math.max(3, Math.min(11, chartWidth / data.length * .62));
+      const candles = data.map((row, index) => {
+        const cx = x(index);
+        const openY = yPrice(row.o);
+        const closeY = yPrice(row.c);
+        const highY = yPrice(row.h);
+        const lowY = yPrice(row.l);
+        const up = row.c >= row.o;
+        const color = up ? "#2563eb" : "#dc2626";
+        const bodyTop = Math.min(openY, closeY);
+        const bodyHeight = Math.max(Math.abs(openY - closeY), 1.5);
+        return `<line x1="${cx.toFixed(1)}" y1="${highY.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${lowY.toFixed(1)}" stroke="${color}" stroke-width="1.2"/>
+          <rect x="${(cx - candleWidth / 2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleWidth.toFixed(1)}" height="${bodyHeight.toFixed(1)}" fill="${color}" rx="1"/>`;
+      }).join("");
+      const maColors = { 5: "#2563eb", 10: "#0f766e", 25: "#b45309", 75: "#7c3aed", 200: "#64748b" };
+      const grid = [0, .25, .5, .75, 1].map((ratio) => {
+        const y = top + ratio * mainHeight;
+        const value = maxPrice + pad - ratio * (maxPrice - minPrice + pad * 2);
+        return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" stroke="#e5ebe8"/><text x="10" y="${y + 4}" fill="#63716d" font-size="12">${Math.round(value).toLocaleString("ja-JP")}</text>`;
+      }).join("");
+      const maLines = selectedMas.map((span, index) => {
+        const points = maSeries[span].map((value, pointIndex) => Number.isFinite(value) ? { x: x(pointIndex), y: yPrice(value) } : null).filter(Boolean);
+        if (points.length < 2) return "";
+        return `<path d="${svgPath(points)}" fill="none" stroke="${maColors[span] || "#334155"}" stroke-width="2"/><text x="${width - right - 88}" y="${top + 18 + index * 18}" fill="${maColors[span] || "#334155"}" font-size="13" font-weight="800">${span}日線</text>`;
+      }).join("");
+      const zigzagLine = (depth, color) => {
+        const points = zigzagPoints(data, depth).map((point) => ({ x: x(point.index), y: yPrice(point.value) }));
+        if (points.length < 2) return "";
+        return `<path d="${svgPath(points)}" fill="none" stroke="${color}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+      };
+      let subPanels = "";
+      let panelTop = top + mainHeight + 30;
+      if (showRsi) {
+        const rsi = rsiValues(closes);
+        const yRsi = (value) => panelTop + (100 - value) * (subHeight - 30) / 100;
+        const points = rsi.map((value, index) => Number.isFinite(value) ? { x: x(index), y: yRsi(value) } : null).filter(Boolean);
+        subPanels += `<text x="${left}" y="${panelTop - 8}" fill="#334155" font-size="13" font-weight="800">RSI</text><line x1="${left}" y1="${yRsi(70)}" x2="${width - right}" y2="${yRsi(70)}" stroke="#fca5a5"/><line x1="${left}" y1="${yRsi(30)}" x2="${width - right}" y2="${yRsi(30)}" stroke="#93c5fd"/><path d="${svgPath(points)}" fill="none" stroke="#7c3aed" stroke-width="2"/>`;
+        panelTop += subHeight;
+      }
+      if (showMacd) {
+        const macd = macdValues(closes);
+        const min = Math.min(...macd);
+        const max = Math.max(...macd);
+        const range = max - min || 1;
+        const yMacd = (value) => panelTop + (max - value) * (subHeight - 30) / range;
+        const points = macd.map((value, index) => ({ x: x(index), y: yMacd(value) }));
+        subPanels += `<text x="${left}" y="${panelTop - 8}" fill="#334155" font-size="13" font-weight="800">MACD</text><line x1="${left}" y1="${yMacd(0)}" x2="${width - right}" y2="${yMacd(0)}" stroke="#d9e1dd"/><path d="${svgPath(points)}" fill="none" stroke="#dc2626" stroke-width="2"/>`;
+      }
+      const periodLabel = { daily: "日足", weekly: "週足", monthly: "月足" }[period] || "日足";
+      title.textContent = `${stock?.name || selectedCode} (${selectedCode}) ${periodLabel} ローソク足`;
+      document.title = `${stock?.name || selectedCode} チャート`;
+      stage.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${stock?.name || selectedCode}のチャート">
+        ${grid}
+        ${candles}
+        ${maLines}
+        ${showZigzag7 ? zigzagLine(7, "#2563eb") : ""}
+        ${showZigzag20 ? zigzagLine(20, "#b45309") : ""}
+        <text x="${left}" y="${height - 12}" fill="#63716d" font-size="12">${data[0].d}</text>
+        <text x="${width - right - 82}" y="${height - 12}" fill="#63716d" font-size="12">${data[data.length - 1].d}</text>
+        ${subPanels}
+      </svg>`;
+      const fetched = window.priceHistoryFetchedAt ? new Date(window.priceHistoryFetchedAt).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) : "—";
+      meta.textContent = `株価データ取得: ${fetched} / 終値: ${closes.at(-1).toLocaleString("ja-JP")}円`;
+    }
+
+    populateStocks();
+    renderChart();
+    select.addEventListener("change", () => {
+      selectedCode = select.value;
+      history.replaceState(null, "", `?code=${encodeURIComponent(selectedCode)}`);
+      renderChart();
+    });
+    document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartZigzag7, #chartZigzag20").forEach((input) => {
+      input.addEventListener("change", renderChart);
+    });
+  </script>
+</body>
+</html>
