@@ -1293,6 +1293,15 @@
           </table>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">上のAI分析で目立ったサイン上位3つをAND条件として、50営業日前のデータで抽出し、50営業日前終値から25営業日前終値までの騰落率を検証します。</p>
+        <h3>注目サインによる75日前スクリーニング検証</h3>
+        <div class="grid" id="aiBacktest75Summary"></div>
+        <div class="table-scroll">
+          <table id="aiBacktest75Table">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">同じ注目サイン上位3つをAND条件として、75営業日前のデータで抽出し、75営業日前終値から50営業日前終値までの騰落率を検証します。</p>
       </section>
     </article>
 
@@ -2248,7 +2257,9 @@
       const summary = document.getElementById("aiAnalysisSummary");
       const backtestTable = document.getElementById("aiBacktestTable");
       const backtestSummary = document.getElementById("aiBacktestSummary");
-      if (!table || !summary || !backtestTable || !backtestSummary) return;
+      const backtest75Table = document.getElementById("aiBacktest75Table");
+      const backtest75Summary = document.getElementById("aiBacktest75Summary");
+      if (!table || !summary || !backtestTable || !backtestSummary || !backtest75Table || !backtest75Summary) return;
       const currentRows = calculateTechnicalRowsAtLookback(0)
         .filter((row) => Number.isFinite(Number(row.priceChange25)))
         .sort((a, b) => Number(b.priceChange25) - Number(a.priceChange25))
@@ -2291,12 +2302,17 @@
         </tr>`;
       }).join("");
       const signalKeys = commonSignals.map((signal) => signal.key);
-      const rows50 = calculateTechnicalRowsAtLookback(50);
-      const rows25ByCode = new Map(calculateTechnicalRowsAtLookback(25).map((row) => [String(row.code), row]));
-      const screenedRows = signalKeys.length === 0 ? [] : rows50
+      renderAiBacktest(signalKeys, commonSignals, 50, 25, backtestSummary, backtestTable);
+      renderAiBacktest(signalKeys, commonSignals, 75, 50, backtest75Summary, backtest75Table);
+    }
+
+    function renderAiBacktest(signalKeys, commonSignals, startLookback, endLookback, summaryElement, tableElement) {
+      const startRows = calculateTechnicalRowsAtLookback(startLookback);
+      const endRowsByCode = new Map(calculateTechnicalRowsAtLookback(endLookback).map((row) => [String(row.code), row]));
+      const screenedRows = signalKeys.length === 0 ? [] : startRows
         .filter((row) => signalKeys.every((key) => isAiSignalActive(row, key)))
         .map((row) => {
-          const futureRow = rows25ByCode.get(String(row.code));
+          const futureRow = endRowsByCode.get(String(row.code));
           const return25 = percentChange(Number(futureRow?.currentPrice), Number(row.currentPrice));
           return {
             row,
@@ -2313,15 +2329,15 @@
       const winRate = screenedRows.length
         ? screenedRows.filter((item) => Number(item.return25) > 0).length / screenedRows.length * 100
         : null;
-      backtestSummary.innerHTML = [
+      summaryElement.innerHTML = [
         `<div class="mini"><span class="tag">条件</span><b>${commonSignals.map((signal) => signal.label).join(" + ") || "—"}</b><p>現在の上昇銘柄で目立ったサイン上位3つをAND条件として使用。</p></div>`,
-        `<div class="mini"><span class="tag warn">抽出数</span><b>${screenedRows.length}銘柄</b><p>50営業日前のテクニカルデータで条件を満たした銘柄数です。</p></div>`,
-        `<div class="mini"><span class="tag dark">25日後成績</span><b>${averageReturn == null ? "—" : `平均 ${colorNumber(averageReturn, `${averageReturn.toFixed(2)}%`)} / 勝率 ${winRate.toFixed(1)}%`}</b><p>50営業日前終値から25営業日前終値までの騰落率。</p></div>`
+        `<div class="mini"><span class="tag warn">抽出数</span><b>${screenedRows.length}銘柄</b><p>${startLookback}営業日前のテクニカルデータで条件を満たした銘柄数です。</p></div>`,
+        `<div class="mini"><span class="tag dark">25日後成績</span><b>${averageReturn == null ? "—" : `平均 ${colorNumber(averageReturn, `${averageReturn.toFixed(2)}%`)} / 勝率 ${winRate.toFixed(1)}%`}</b><p>${startLookback}営業日前終値から${endLookback}営業日前終値までの騰落率。</p></div>`
       ].join("");
-      backtestTable.querySelector("thead").innerHTML = `<tr>
-        <th>銘柄</th><th>コード</th><th>セクタ</th><th>50日前終値</th><th>25日前終値</th><th>25日間騰落率</th><th>該当サイン</th>
+      tableElement.querySelector("thead").innerHTML = `<tr>
+        <th>銘柄</th><th>コード</th><th>セクタ</th><th>${startLookback}日前終値</th><th>${endLookback}日前終値</th><th>25日間騰落率</th><th>該当サイン</th>
       </tr>`;
-      backtestTable.querySelector("tbody").innerHTML = screenedRows.length ? screenedRows.map(({ row, futureRow, return25, matchedSignals }) => (
+      tableElement.querySelector("tbody").innerHTML = screenedRows.length ? screenedRows.map(({ row, futureRow, return25, matchedSignals }) => (
         `<tr>
           <td>${row.name}</td>
           <td class="code">${row.code}</td>
