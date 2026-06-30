@@ -321,7 +321,9 @@
     }
 
     function populateStocks() {
-      const rows = window.technicalRows || [];
+      const rows = (window.technicalRows || []).concat(
+        window.priceHistoryRows?.N225 ? [{ name: "日経平均", code: "N225", sector: "市場指数" }] : []
+      );
       select.innerHTML = rows.map((row) => (
         `<option value="${row.code}">${row.name} (${row.code}) / ${row.sector}</option>`
       )).join("");

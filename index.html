@@ -47,7 +47,11 @@
     }
 
     .hero {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
     .eyebrow {
@@ -70,6 +74,30 @@
       color: rgba(255,255,255,.78);
       font-size: 12px;
       font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .header-button {
+      border: 1px solid rgba(255,255,255,.42);
+      border-radius: 8px;
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      min-height: 34px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .header-button:hover {
+      background: rgba(255,255,255,.2);
     }
 
     .tabs-wrap {
@@ -670,6 +698,9 @@
         <h1>データセンター・半導体 投資判断ツール</h1>
         <div class="header-meta" id="priceDataTimestamp">株価データ取得: —</div>
       </div>
+      <div class="header-actions">
+        <button class="header-button" type="button" id="nikkeiChartButton">日経平均チャート</button>
+      </div>
     </div>
   </header>
 
@@ -685,6 +716,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="technical" data-tab="technical">テクニカル分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="ai-analysis" data-tab="ai-analysis">AI分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="screening-test" data-tab="screening-test">スクリーニングテスト</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="nikkei-correlation" data-tab="nikkei-correlation">日経平均相関</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
@@ -1318,6 +1350,27 @@
           </table>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">検証範囲は25〜99営業日前の75期間。各期間で2条件・3条件の組み合わせをテストし、最も効果的だった条件、抽出銘柄数、平均騰落率、勝率を表示します。</p>
+      </section>
+    </article>
+
+    <article class="panel" id="nikkei-correlation">
+      <section class="block">
+        <h2>日経平均相関</h2>
+        <p>スクリーニングテストの75期間について、同期間の日経平均騰落率と比較し、日経平均の状態によって勝率・騰落率がどう変わるかを確認します。</p>
+        <div class="grid" id="nikkeiCorrelationSummary"></div>
+        <div class="table-scroll">
+          <table id="nikkeiCorrelationTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3>日経平均の状態別サマリー</h3>
+        <div class="table-scroll">
+          <table id="nikkeiConditionTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </section>
     </article>
 
@@ -2401,6 +2454,7 @@
       const best = trades.reduce((bestTrade, trade) => trade.return25 > bestTrade.return25 ? trade : bestTrade, trades[0]);
       const worst = trades.reduce((worstTrade, trade) => trade.return25 < worstTrade.return25 ? trade : worstTrade, trades[0]);
       return {
+        keys: combo.map(([key]) => key),
         labels: combo.map(([, label]) => label),
         count: trades.length,
         averageReturn,
@@ -2410,10 +2464,7 @@
       };
     }
 
-    function renderScreeningTest() {
-      const table = document.getElementById("screeningTestTable");
-      const summary = document.getElementById("screeningTestSummary");
-      if (!table || !summary) return;
+    function getScreeningTestResults() {
       const combos = [
         ...buildSignalCombinations(aiSignalDefinitions, 2),
         ...buildSignalCombinations(aiSignalDefinitions, 3)
@@ -2431,6 +2482,14 @@
           testedCombinations: candidates.length
         };
       });
+      return { combos, results };
+    }
+
+    function renderScreeningTest() {
+      const table = document.getElementById("screeningTestTable");
+      const summary = document.getElementById("screeningTestSummary");
+      if (!table || !summary) return;
+      const { combos, results } = getScreeningTestResults();
       const totalCombos = combos.length;
       const validResults = results.filter((result) => result.best);
       const averageOfBest = validResults.length
@@ -2451,9 +2510,11 @@
         if (!best) {
           return `<tr><td>${startLookback}日前</td><td>${startLookback}日前→${endLookback}日前</td><td colspan="6">抽出3銘柄以上の組み合わせがありませんでした。</td></tr>`;
         }
+        const startDate = nikkeiRowAtLookback(startLookback)?.date || "—";
+        const endDate = nikkeiRowAtLookback(endLookback)?.date || "—";
         return `<tr>
           <td>${startLookback}日前</td>
-          <td>${startLookback}日前→${endLookback}日前</td>
+          <td>${startLookback}日前→${endLookback}日前<br><span class="eyebrow" style="color: var(--muted);">${startDate}〜${endDate}</span></td>
           <td>${best.labels.join("<br>")}</td>
           <td>${best.count}</td>
           <td>${colorNumber(best.averageReturn, `${best.averageReturn.toFixed(2)}%`)}</td>
@@ -2462,6 +2523,136 @@
           <td>${best.worst.name} (${best.worst.code})<br>${colorNumber(best.worst.return25, `${best.worst.return25.toFixed(2)}%`)}</td>
         </tr>`;
       }).join("");
+    }
+
+    function nikkeiRowAtLookback(lookback) {
+      const history = window.priceHistoryRows?.N225 || [];
+      const usableRows = lookback > 0 ? history.slice(0, -lookback) : history;
+      if (!usableRows.length) return null;
+      const closes = usableRows.map((row) => row.c);
+      const currentPrice = closes.at(-1);
+      const output = {
+        name: "日経平均",
+        code: "N225",
+        sector: "市場指数",
+        currentPrice: roundNumber(currentPrice),
+        date: usableRows.at(-1)?.d || null
+      };
+      [5, 10, 25, 75, 100, 200].forEach((days) => {
+        const ma = trailingAverage(closes, days);
+        const previousMa = trailingAverage(closes, days, 1);
+        output[`ma${days}`] = roundNumber(ma);
+        output[`ma${days}Slope`] = roundNumber(percentChange(ma, previousMa));
+        output[`ma${days}Divergence`] = roundNumber(percentChange(currentPrice, ma));
+      });
+      [5, 10, 25, 50, 100, 200].forEach((days) => {
+        output[`priceChange${days}`] = roundNumber(percentChange(currentPrice, closes.at(-1 - days)));
+      });
+      const macdOutput = macdDetailsForTable(closes);
+      output.macd = roundNumber(macdOutput.macd);
+      output.macdSignal = roundNumber(macdOutput.signal);
+      output.macdHistogram = roundNumber(macdOutput.histogram);
+      output.macdGoldenCrossWithin5BelowZero = macdOutput.goldenCrossWithin5BelowZero;
+      output.macdGoldenCrossWithin10BelowZero = macdOutput.goldenCrossWithin10BelowZero;
+      output.rsi = roundNumber(rsiForTable(closes));
+      [7, 20].forEach((depth) => {
+        const zz = zigzagForTable(usableRows, depth);
+        output[`zigzag${depth}`] = zz?.trend ?? null;
+      });
+      return output;
+    }
+
+    function pearsonCorrelation(pairs) {
+      if (pairs.length < 2) return null;
+      const avgX = pairs.reduce((sum, [x]) => sum + x, 0) / pairs.length;
+      const avgY = pairs.reduce((sum, [, y]) => sum + y, 0) / pairs.length;
+      const numerator = pairs.reduce((sum, [x, y]) => sum + (x - avgX) * (y - avgY), 0);
+      const denomX = Math.sqrt(pairs.reduce((sum, [x]) => sum + (x - avgX) ** 2, 0));
+      const denomY = Math.sqrt(pairs.reduce((sum, [, y]) => sum + (y - avgY) ** 2, 0));
+      if (denomX === 0 || denomY === 0) return null;
+      return numerator / (denomX * denomY);
+    }
+
+    function summarizeNikkeiState(label, rows, predicate) {
+      const matched = rows.filter(predicate);
+      if (!matched.length) return { label, count: 0, avgReturn: null, winRate: null, avgNikkei: null };
+      return {
+        label,
+        count: matched.length,
+        avgReturn: matched.reduce((sum, row) => sum + row.screenReturn, 0) / matched.length,
+        winRate: matched.filter((row) => row.screenReturn > 0).length / matched.length * 100,
+        avgNikkei: matched.reduce((sum, row) => sum + row.nikkeiReturn, 0) / matched.length
+      };
+    }
+
+    function renderNikkeiCorrelation() {
+      const summary = document.getElementById("nikkeiCorrelationSummary");
+      const table = document.getElementById("nikkeiCorrelationTable");
+      const conditionTable = document.getElementById("nikkeiConditionTable");
+      if (!summary || !table || !conditionTable) return;
+      const { results } = getScreeningTestResults();
+      const rows = results.map(({ startLookback, endLookback, best }) => {
+        const nikkeiStart = nikkeiRowAtLookback(startLookback);
+        const nikkeiEnd = nikkeiRowAtLookback(endLookback);
+        const nikkeiReturn = percentChange(Number(nikkeiEnd?.currentPrice), Number(nikkeiStart?.currentPrice));
+        if (!best || !nikkeiStart || !nikkeiEnd || !Number.isFinite(nikkeiReturn)) return null;
+        const sameCondition = best.keys.every((key) => isAiSignalActive(nikkeiStart, key));
+        return {
+          startLookback,
+          endLookback,
+          best,
+          nikkeiStart,
+          nikkeiEnd,
+          nikkeiReturn,
+          sameCondition,
+          screenReturn: best.averageReturn,
+          winDiff: best.winRate - (nikkeiReturn > 0 ? 100 : 0)
+        };
+      }).filter(Boolean);
+      const correlation = pearsonCorrelation(rows.map((row) => [row.screenReturn, row.nikkeiReturn]));
+      const sameRows = rows.filter((row) => row.sameCondition);
+      const sameAvg = sameRows.length ? sameRows.reduce((sum, row) => sum + row.screenReturn, 0) / sameRows.length : null;
+      const sameWin = sameRows.length ? sameRows.filter((row) => row.screenReturn > 0).length / sameRows.length * 100 : null;
+      summary.innerHTML = [
+        `<div class="mini"><span class="tag">相関</span><b>${correlation == null ? "—" : correlation.toFixed(3)}</b><p>スクリーニング平均騰落率と日経平均騰落率の相関です。</p></div>`,
+        `<div class="mini"><span class="tag warn">同条件成立</span><b>${sameRows.length}期間</b><p>日経平均でも、その期間の最上位スクリーニング条件が成立した回数です。</p></div>`,
+        `<div class="mini"><span class="tag dark">同条件時成績</span><b>${sameAvg == null ? "—" : `平均 ${colorNumber(sameAvg, `${sameAvg.toFixed(2)}%`)} / 勝率 ${sameWin.toFixed(1)}%`}</b><p>日経平均にも同じ条件が揃った時のスクリーニング成績です。</p></div>`
+      ].join("");
+      table.querySelector("thead").innerHTML = `<tr>
+        <th>基準日</th><th>検証期間</th><th>条件</th><th>抽出勝率</th><th>抽出平均騰落</th><th>日経平均騰落</th><th>日経同条件</th><th>勝率差</th>
+      </tr>`;
+      table.querySelector("tbody").innerHTML = rows.map((row) => (
+        `<tr>
+          <td>${row.startLookback}日前<br><span class="eyebrow" style="color: var(--muted);">${row.nikkeiStart.date}</span></td>
+          <td>${row.startLookback}日前→${row.endLookback}日前<br><span class="eyebrow" style="color: var(--muted);">${row.nikkeiStart.date}〜${row.nikkeiEnd.date}</span></td>
+          <td>${row.best.labels.join("<br>")}</td>
+          <td>${row.best.winRate.toFixed(1)}%</td>
+          <td>${colorNumber(row.screenReturn, `${row.screenReturn.toFixed(2)}%`)}</td>
+          <td>${colorNumber(row.nikkeiReturn, `${row.nikkeiReturn.toFixed(2)}%`)}</td>
+          <td>${row.sameCondition ? "成立" : "不成立"}</td>
+          <td>${colorNumber(row.winDiff, `${row.winDiff.toFixed(1)}pt`)}</td>
+        </tr>`
+      )).join("");
+      const stateRows = [
+        summarizeNikkeiState("日経平均 25日騰落率プラス", rows, (row) => Number(row.nikkeiStart.priceChange25) > 0),
+        summarizeNikkeiState("日経平均 25日線上昇", rows, (row) => Number(row.nikkeiStart.ma25Slope) > 0),
+        summarizeNikkeiState("日経平均 終値 > 75日線", rows, (row) => Number(row.nikkeiStart.ma75Divergence) > 0),
+        summarizeNikkeiState("日経平均 MACDヒストグラム改善", rows, (row) => Number(row.nikkeiStart.macdHistogram) > 0),
+        summarizeNikkeiState("日経平均 RSI 50〜70", rows, (row) => Number(row.nikkeiStart.rsi) >= 50 && Number(row.nikkeiStart.rsi) <= 70),
+        summarizeNikkeiState("日経平均も同じ条件成立", rows, (row) => row.sameCondition)
+      ].sort((a, b) => (b.avgReturn ?? -Infinity) - (a.avgReturn ?? -Infinity));
+      conditionTable.querySelector("thead").innerHTML = `<tr>
+        <th>日経平均の状態</th><th>該当期間</th><th>抽出平均騰落率</th><th>抽出勝率</th><th>日経平均平均騰落率</th>
+      </tr>`;
+      conditionTable.querySelector("tbody").innerHTML = stateRows.map((row) => (
+        `<tr>
+          <td>${row.label}</td>
+          <td>${row.count}</td>
+          <td>${row.avgReturn == null ? "—" : colorNumber(row.avgReturn, `${row.avgReturn.toFixed(2)}%`)}</td>
+          <td>${row.winRate == null ? "—" : `${row.winRate.toFixed(1)}%`}</td>
+          <td>${row.avgNikkei == null ? "—" : colorNumber(row.avgNikkei, `${row.avgNikkei.toFixed(2)}%`)}</td>
+        </tr>`
+      )).join("");
     }
 
     function renderTechnicalControls() {
@@ -2833,9 +3024,13 @@
     document.querySelectorAll("input[name='chartPeriod'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
       input.addEventListener("change", renderChart);
     });
+    document.getElementById("nikkeiChartButton")?.addEventListener("click", () => {
+      openChartTab("N225");
+    });
     renderTechnicalTable();
     renderAiAnalysis();
     renderScreeningTest();
+    renderNikkeiCorrelation();
     renderPriceDataTimestamp();
   </script>
 </body>
