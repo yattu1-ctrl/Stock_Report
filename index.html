@@ -589,6 +589,51 @@
       border-radius: 8px;
     }
 
+    .sector-checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .sector-checks label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent-3);
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .sector-chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin-top: 10px;
+      color: var(--accent-3);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .sector-chart-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-swatch {
+      width: 18px;
+      height: 3px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
     .chart-placeholder {
       display: grid;
       place-items: center;
@@ -612,6 +657,111 @@
       font-weight: 900;
       cursor: pointer;
       white-space: nowrap;
+    }
+
+    .screening-count-button {
+      min-height: 28px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent);
+      padding: 2px 9px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .screening-count-button:hover,
+    .screening-count-button:focus-visible {
+      background: var(--soft);
+      outline: none;
+    }
+
+    .stock-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(24, 33, 31, .48);
+    }
+
+    .stock-popup.is-open {
+      display: flex;
+    }
+
+    .stock-popup-panel {
+      width: min(520px, 100%);
+      max-height: min(680px, calc(100vh - 36px));
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .stock-popup-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stock-popup-title {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    .stock-popup-meta {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .stock-popup-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent-3);
+      font: inherit;
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .stock-popup-body {
+      max-height: min(540px, calc(100vh - 142px));
+      overflow: auto;
+      padding: 12px 16px 16px;
+    }
+
+    .stock-popup-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .stock-popup-table th,
+    .stock-popup-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+    }
+
+    .stock-popup-table th {
+      color: var(--accent-3);
+      font-size: 12px;
     }
 
     .portfolio-tech-cell {
@@ -717,6 +867,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="ai-analysis" data-tab="ai-analysis">AI分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="screening-test" data-tab="screening-test">スクリーニングテスト</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="nikkei-correlation" data-tab="nikkei-correlation">日経平均相関</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="sector-chart" data-tab="sector-chart">セクタ別</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
@@ -1377,6 +1528,27 @@
       </section>
     </article>
 
+    <article class="panel" id="sector-chart">
+      <section class="block">
+        <h2>セクタ別</h2>
+        <p>各銘柄を期間開始時点で100に指数化し、セクタ内で等しく平均します。日経平均や複数セクタを重ねて、出遅れセクターを確認します。</p>
+        <div class="chart-controls" aria-label="セクタ別チャート期間">
+          <label><input type="radio" name="sectorChartRange" value="200" checked>200日</label>
+          <label><input type="radio" name="sectorChartRange" value="500">500日</label>
+          <label><input type="radio" name="sectorChartRange" value="1000">1000日</label>
+        </div>
+        <div class="sector-checks" id="sectorChartControls" aria-label="表示する指数"></div>
+        <div class="grid" id="sectorChartSummary"></div>
+        <div class="chart-panel">
+          <div class="chart-head">
+            <div class="chart-title" id="sectorChartTitle">セクタ別 等ウェイト指数</div>
+          </div>
+          <div class="chart-stage" id="sectorChartStage"></div>
+          <div class="sector-chart-legend" id="sectorChartLegend"></div>
+        </div>
+      </section>
+    </article>
+
     <article class="panel" id="portfolio">
       <section class="block">
         <h2>予算200万円でのポートフォリオ</h2>
@@ -1689,6 +1861,24 @@
     <div class="shell">作成日: 2026年6月30日 / 対象: 日本国内株式のデータセンター関連・半導体関連テーマ</div>
   </footer>
 
+  <div class="stock-popup" id="screeningStockPopup" aria-hidden="true">
+    <div class="stock-popup-panel" role="dialog" aria-modal="true" aria-labelledby="screeningStockPopupTitle">
+      <div class="stock-popup-head">
+        <div>
+          <h2 class="stock-popup-title" id="screeningStockPopupTitle">抽出銘柄</h2>
+          <p class="stock-popup-meta" id="screeningStockPopupMeta"></p>
+        </div>
+        <button class="stock-popup-close" type="button" aria-label="閉じる" id="screeningStockPopupClose">×</button>
+      </div>
+      <div class="stock-popup-body">
+        <table class="stock-popup-table">
+          <thead><tr><th>銘柄</th><th>コード</th></tr></thead>
+          <tbody id="screeningStockPopupBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <script src="data/technical-indicators.js"></script>
   <script src="data/price-history-200d.js"></script>
   <script>
@@ -1738,6 +1928,8 @@
     let stockSort = { key: "code", direction: "asc" };
     let technicalSort = { key: "code", direction: "asc" };
     let selectedChartCode = null;
+    let screeningTestRows = [];
+    const sectorChartColors = ["#18211f", "#2563eb", "#dc2626", "#0f766e", "#b45309", "#7c3aed", "#0891b2", "#be123c", "#4d7c0f", "#9333ea", "#0f172a", "#ea580c"];
 
     function activateTab(id) {
       tabs.forEach((tab) => {
@@ -2463,7 +2655,10 @@
         averageReturn,
         winRate,
         best,
-        worst
+        worst,
+        stocks: trades
+          .map(({ name, code }) => ({ name, code }))
+          .sort((a, b) => String(a.code).localeCompare(String(b.code), "ja"))
       };
     }
 
@@ -2506,6 +2701,7 @@
         `<div class="mini"><span class="tag warn">組み合わせ</span><b>${totalCombos}通り</b><p>各期間で2条件・3条件ANDを全て試し、抽出3銘柄以上の最上位条件を採用します。</p></div>`,
         `<div class="mini"><span class="tag dark">676期間サマリー</span><b>${averageOfBest == null ? "—" : `平均 ${colorNumber(averageOfBest, `${averageOfBest.toFixed(2)}%`)} / 勝率 ${winRateOfBest.toFixed(1)}%`}</b><p>各期間の最上位条件だけを並べた場合の平均です。</p></div>`
       ].join("");
+      screeningTestRows = results;
       table.querySelector("thead").innerHTML = `<tr>
         <th>基準日</th><th>検証期間</th><th>最上位スクリーニング条件</th><th>抽出銘柄数</th><th>平均騰落率</th><th>勝率</th><th>最大上昇</th><th>最大下落</th>
       </tr>`;
@@ -2519,13 +2715,49 @@
           <td>${startLookback}日前</td>
           <td>${startLookback}日前→${endLookback}日前<br><span class="eyebrow" style="color: var(--muted);">${startDate}〜${endDate}</span></td>
           <td>${best.labels.join("<br>")}</td>
-          <td>${best.count}</td>
+          <td><button class="screening-count-button" type="button" data-screening-lookback="${startLookback}">${best.count}銘柄</button></td>
           <td>${colorNumber(best.averageReturn, `${best.averageReturn.toFixed(2)}%`)}</td>
           <td>${best.winRate.toFixed(1)}%</td>
           <td>${best.best.name} (${best.best.code})<br>${colorNumber(best.best.return25, `${best.best.return25.toFixed(2)}%`)}</td>
           <td>${best.worst.name} (${best.worst.code})<br>${colorNumber(best.worst.return25, `${best.worst.return25.toFixed(2)}%`)}</td>
         </tr>`;
       }).join("");
+      table.querySelectorAll(".screening-count-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          openScreeningStockPopup(Number(button.dataset.screeningLookback));
+        });
+      });
+    }
+
+    function openScreeningStockPopup(startLookback) {
+      const popup = document.getElementById("screeningStockPopup");
+      const title = document.getElementById("screeningStockPopupTitle");
+      const meta = document.getElementById("screeningStockPopupMeta");
+      const body = document.getElementById("screeningStockPopupBody");
+      const result = screeningTestRows.find((row) => row.startLookback === startLookback);
+      if (!popup || !title || !meta || !body || !result?.best) return;
+      title.textContent = `${startLookback}日前の抽出銘柄`;
+      meta.textContent = `${result.startLookback}日前→${result.endLookback}日前 / ${result.best.labels.join(" + ")}`;
+      body.replaceChildren(...result.best.stocks.map((stock) => {
+        const tr = document.createElement("tr");
+        const name = document.createElement("td");
+        const code = document.createElement("td");
+        name.textContent = stock.name;
+        code.textContent = stock.code;
+        code.className = "code";
+        tr.append(name, code);
+        return tr;
+      }));
+      popup.classList.add("is-open");
+      popup.setAttribute("aria-hidden", "false");
+      document.getElementById("screeningStockPopupClose")?.focus();
+    }
+
+    function closeScreeningStockPopup() {
+      const popup = document.getElementById("screeningStockPopup");
+      if (!popup) return;
+      popup.classList.remove("is-open");
+      popup.setAttribute("aria-hidden", "true");
     }
 
     function nikkeiRowAtLookback(lookback) {
@@ -2656,6 +2888,184 @@
           <td>${row.avgNikkei == null ? "—" : colorNumber(row.avgNikkei, `${row.avgNikkei.toFixed(2)}%`)}</td>
         </tr>`
       )).join("");
+    }
+
+    function sectorChartGroups() {
+      const groups = new Map();
+      stockRows.forEach((stock) => {
+        const history = window.priceHistoryRows?.[stock.code] || [];
+        if (!stock.sector || history.length < 2) return;
+        if (!groups.has(stock.sector)) groups.set(stock.sector, []);
+        groups.get(stock.sector).push(stock);
+      });
+      return Array.from(groups.entries())
+        .map(([sector, stocks]) => ({ sector, stocks }))
+        .sort((a, b) => b.stocks.length - a.stocks.length || a.sector.localeCompare(b.sector, "ja"));
+    }
+
+    function renderSectorChartControls() {
+      const controls = document.getElementById("sectorChartControls");
+      if (!controls) return;
+      const groups = sectorChartGroups();
+      const defaultSectors = new Set(groups.slice(0, 4).map((group) => group.sector));
+      const items = [
+        { key: "N225", label: "日経平均", checked: true },
+        ...groups.map((group) => ({
+          key: group.sector,
+          label: `${group.sector} (${group.stocks.length})`,
+          checked: defaultSectors.has(group.sector)
+        }))
+      ];
+      controls.replaceChildren(...items.map((item) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = item.key;
+        input.checked = item.checked;
+        input.addEventListener("change", renderSectorChart);
+        label.append(input, document.createTextNode(item.label));
+        return label;
+      }));
+    }
+
+    function selectedSectorChartKeys() {
+      return Array.from(document.querySelectorAll("#sectorChartControls input:checked")).map((input) => input.value);
+    }
+
+    function indexedSeriesFromHistory(history, dates) {
+      const byDate = new Map(history.map((row) => [row.d, Number(row.c)]));
+      const base = dates.map((date) => byDate.get(date)).find((value) => Number.isFinite(value) && value > 0);
+      if (!base) return dates.map(() => null);
+      return dates.map((date) => {
+        const close = byDate.get(date);
+        return Number.isFinite(close) && close > 0 ? close / base * 100 : null;
+      });
+    }
+
+    function sectorIndexedSeries(group, dates) {
+      const memberSeries = group.stocks
+        .map((stock) => indexedSeriesFromHistory(window.priceHistoryRows?.[stock.code] || [], dates))
+        .filter((series) => series.some((value) => Number.isFinite(value)));
+      const values = dates.map((_, index) => {
+        const dayValues = memberSeries.map((series) => series[index]).filter(Number.isFinite);
+        return dayValues.length ? dayValues.reduce((sum, value) => sum + value, 0) / dayValues.length : null;
+      });
+      return { values, count: memberSeries.length };
+    }
+
+    function linePathForValues(values, x, y) {
+      let path = "";
+      let drawing = false;
+      values.forEach((value, index) => {
+        if (!Number.isFinite(value)) {
+          drawing = false;
+          return;
+        }
+        path += `${drawing ? " L" : "M"} ${x(index).toFixed(1)} ${y(value).toFixed(1)}`;
+        drawing = true;
+      });
+      return path;
+    }
+
+    function renderSectorChart() {
+      const stage = document.getElementById("sectorChartStage");
+      const legend = document.getElementById("sectorChartLegend");
+      const summary = document.getElementById("sectorChartSummary");
+      if (!stage || !legend || !summary) return;
+      const range = Number(document.querySelector("input[name='sectorChartRange']:checked")?.value || 200);
+      const axisRows = (window.priceHistoryRows?.N225 || []).slice(-range);
+      const dates = axisRows.map((row) => row.d);
+      const groups = sectorChartGroups();
+      const groupBySector = new Map(groups.map((group) => [group.sector, group]));
+      const selectedKeys = selectedSectorChartKeys();
+      if (!dates.length || !selectedKeys.length) {
+        stage.innerHTML = `<div class="chart-placeholder">表示する指数を選択してください</div>`;
+        legend.replaceChildren();
+        summary.innerHTML = "";
+        return;
+      }
+      const allSectorSeries = groups.map((group) => {
+        const series = sectorIndexedSeries(group, dates);
+        const latest = [...series.values].reverse().find(Number.isFinite);
+        return { key: group.sector, label: group.sector, count: series.count, values: series.values, latest };
+      }).filter((item) => Number.isFinite(item.latest));
+      const selectedSeries = selectedKeys.map((key) => {
+        if (key === "N225") {
+          return {
+            key,
+            label: "日経平均",
+            count: 1,
+            values: indexedSeriesFromHistory(window.priceHistoryRows?.N225 || [], dates)
+          };
+        }
+        const group = groupBySector.get(key);
+        if (!group) return null;
+        const series = sectorIndexedSeries(group, dates);
+        return { key, label: key, count: series.count, values: series.values };
+      }).filter(Boolean).filter((item) => item.values.some(Number.isFinite));
+      if (!selectedSeries.length) {
+        stage.innerHTML = `<div class="chart-placeholder">チャート用データがありません</div>`;
+        legend.replaceChildren();
+        return;
+      }
+      const values = selectedSeries.flatMap((series) => series.values).filter(Number.isFinite);
+      const minValue = Math.min(100, ...values);
+      const maxValue = Math.max(100, ...values);
+      const padding = Math.max(4, (maxValue - minValue) * .12);
+      const min = minValue - padding;
+      const max = maxValue + padding;
+      const width = 1180;
+      const height = 520;
+      const left = 58;
+      const right = 28;
+      const top = 24;
+      const bottom = 42;
+      const chartWidth = width - left - right;
+      const chartHeight = height - top - bottom;
+      const x = (index) => left + (dates.length <= 1 ? 0 : index * chartWidth / (dates.length - 1));
+      const y = (value) => top + (max - value) * chartHeight / (max - min || 1);
+      const grid = Array.from({ length: 6 }, (_, index) => {
+        const value = min + (max - min) * index / 5;
+        const yy = y(value);
+        return `<line x1="${left}" y1="${yy.toFixed(1)}" x2="${width - right}" y2="${yy.toFixed(1)}" stroke="#d9e1dd"/><text x="10" y="${(yy + 4).toFixed(1)}" fill="#63716d" font-size="11">${value.toFixed(0)}</text>`;
+      }).join("");
+      const baseLine = 100 >= min && 100 <= max
+        ? `<line x1="${left}" y1="${y(100).toFixed(1)}" x2="${width - right}" y2="${y(100).toFixed(1)}" stroke="#334155" stroke-dasharray="4 4"/><text x="${width - right - 34}" y="${(y(100) - 6).toFixed(1)}" fill="#334155" font-size="11" font-weight="800">100</text>`
+        : "";
+      const lines = selectedSeries.map((series, index) => {
+        const color = sectorChartColors[index % sectorChartColors.length];
+        const path = linePathForValues(series.values, x, y);
+        return `<path d="${path}" fill="none" stroke="${color}" stroke-width="2.1"/>`;
+      }).join("");
+      stage.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="セクタ別等ウェイト指数チャート">
+        ${grid}
+        ${baseLine}
+        ${lines}
+        <text x="${left}" y="${height - 12}" fill="#63716d" font-size="11">${dates[0]}</text>
+        <text x="${width - right - 74}" y="${height - 12}" fill="#63716d" font-size="11">${dates.at(-1)}</text>
+      </svg>`;
+      legend.replaceChildren(...selectedSeries.map((series, index) => {
+        const item = document.createElement("span");
+        item.style.color = sectorChartColors[index % sectorChartColors.length];
+        const swatch = document.createElement("i");
+        swatch.className = "legend-swatch";
+        const latest = [...series.values].reverse().find(Number.isFinite);
+        item.append(swatch, document.createTextNode(`${series.label} ${latest ? `${(latest - 100).toFixed(1)}%` : ""}`));
+        return item;
+      }));
+      const laggards = allSectorSeries
+        .map((series) => ({ ...series, returnRate: series.latest - 100 }))
+        .sort((a, b) => a.returnRate - b.returnRate)
+        .slice(0, 3);
+      const leaders = allSectorSeries
+        .map((series) => ({ ...series, returnRate: series.latest - 100 }))
+        .sort((a, b) => b.returnRate - a.returnRate)
+        .slice(0, 3);
+      summary.innerHTML = [
+        `<div class="mini"><span class="tag">計算方法</span><b>等ウェイト指数</b><p>各銘柄を期間開始時点100にしてから、セクタごとに平均します。</p></div>`,
+        `<div class="mini"><span class="tag warn">出遅れ</span><b>${laggards.map((item) => `${item.label} ${item.returnRate.toFixed(1)}%`).join(" / ") || "—"}</b><p>選択期間で上昇率が低いセクタです。</p></div>`,
+        `<div class="mini"><span class="tag dark">先行</span><b>${leaders.map((item) => `${item.label} ${item.returnRate.toFixed(1)}%`).join(" / ") || "—"}</b><p>選択期間で上昇率が高いセクタです。</p></div>`
+      ].join("");
     }
 
     function renderTechnicalControls() {
@@ -3029,13 +3439,25 @@
     document.querySelectorAll("input[name='chartPeriod'], input[name='chartDailyLimit'], .chart-ma, #chartRsi, #chartMacd, #chartIchimoku, #chartZigzag7, #chartZigzag20").forEach((input) => {
       input.addEventListener("change", renderChart);
     });
+    document.querySelectorAll("input[name='sectorChartRange']").forEach((input) => {
+      input.addEventListener("change", renderSectorChart);
+    });
     document.getElementById("nikkeiChartButton")?.addEventListener("click", () => {
       openChartTab("N225");
+    });
+    document.getElementById("screeningStockPopupClose")?.addEventListener("click", closeScreeningStockPopup);
+    document.getElementById("screeningStockPopup")?.addEventListener("click", (event) => {
+      if (event.target.id === "screeningStockPopup") closeScreeningStockPopup();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeScreeningStockPopup();
     });
     renderTechnicalTable();
     renderAiAnalysis();
     renderScreeningTest();
     renderNikkeiCorrelation();
+    renderSectorChartControls();
+    renderSectorChart();
     renderPriceDataTimestamp();
   </script>
 </body>
