@@ -683,6 +683,7 @@
       <button class="tab" type="button" aria-selected="false" aria-controls="news" data-tab="news">ニュース一覧</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="stock-list" data-tab="stock-list">銘柄一覧</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="technical" data-tab="technical">テクニカル分析</button>
+      <button class="tab" type="button" aria-selected="false" aria-controls="ai-analysis" data-tab="ai-analysis">AI分析</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="portfolio" data-tab="portfolio">200万円PF</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="fundamental" data-tab="fundamental">ファンダメンタル</button>
       <button class="tab" type="button" aria-selected="false" aria-controls="overheat" data-tab="overheat">過熱・売られすぎ</button>
@@ -1268,6 +1269,21 @@
           </div>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">移動平均線の上昇率は、当日移動平均と前営業日の同期間移動平均を比較。株価上昇率は現在値と指定営業日前の終値を比較。MACDは12日EMA-26日EMA、RSIは14日で計算。</p>
+      </section>
+    </article>
+
+    <article class="panel" id="ai-analysis">
+      <section class="block">
+        <h2>AI分析</h2>
+        <p>25日株価上昇率が高い銘柄について、上昇前の30〜20営業日前に出ていたテクニカルサインを集計します。サインは保存済みの日足データから自動計算しています。</p>
+        <div class="grid" id="aiAnalysisSummary"></div>
+        <div class="table-scroll">
+          <table id="aiAnalysisTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">対象は現在の25日上昇率上位銘柄。サイン回数は30〜20営業日前の11日間で、条件に該当した日数を示します。</p>
       </section>
     </article>
 
@@ -2102,8 +2118,7 @@
       };
     }
 
-    function technicalRowsForLookback() {
-      const lookback = Number(document.getElementById("technicalLookbackSelect")?.value || 0);
+    function calculateTechnicalRowsAtLookback(lookback) {
       if (lookback === 0) return window.technicalRows || [];
       if (technicalLookbackCache.has(lookback)) return technicalLookbackCache.get(lookback);
       const rows = stockRows.map((stock) => {
@@ -2152,6 +2167,11 @@
       return rows;
     }
 
+    function technicalRowsForLookback() {
+      const lookback = Number(document.getElementById("technicalLookbackSelect")?.value || 0);
+      return calculateTechnicalRowsAtLookback(lookback);
+    }
+
     function renderTechnicalLookbackSelect() {
       const select = document.getElementById("technicalLookbackSelect");
       if (!select) return;
@@ -2159,6 +2179,102 @@
         `<option value="${days}">${days === 0 ? "0日前（最新）" : `${days}日前`}</option>`
       )).join("");
       select.addEventListener("change", renderTechnicalTable);
+    }
+
+    const aiSignalDefinitions = [
+      ["maOrder5", "MA順 5/10/25/75/200"],
+      ["maOrder5With10_75_200Up", "MA順 + 10/75/200上昇"],
+      ["ma25Up", "25日線上昇"],
+      ["aboveMa25", "終値 > 25日線"],
+      ["aboveMa75", "終値 > 75日線"],
+      ["macdImproving", "MACDヒストグラム改善"],
+      ["macdGoldenCrossWithin5BelowZero", "MACD 0以下・5日以内GC"],
+      ["rsiMomentum", "RSI 50〜70"],
+      ["zigzag7Up", "ZigZag7 上昇"],
+      ["zigzag20Up", "ZigZag20 上昇"]
+    ];
+
+    function isAiSignalActive(row, key) {
+      if (!row) return false;
+      if (key === "maOrder5") return matchesTechnicalPattern(row, "maOrder5");
+      if (key === "maOrder5With10_75_200Up") return matchesTechnicalPattern(row, "maOrder5With10_75_200Up");
+      if (key === "ma25Up") return Number(row.ma25Slope) > 0;
+      if (key === "aboveMa25") return Number(row.ma25Divergence) > 0;
+      if (key === "aboveMa75") return Number(row.ma75Divergence) > 0;
+      if (key === "macdImproving") return Number(row.macdHistogram) > 0;
+      if (key === "macdGoldenCrossWithin5BelowZero") return row.macdGoldenCrossWithin5BelowZero === true;
+      if (key === "rsiMomentum") return Number(row.rsi) >= 50 && Number(row.rsi) <= 70;
+      if (key === "zigzag7Up") return row.zigzag7 === "上昇中";
+      if (key === "zigzag20Up") return row.zigzag20 === "上昇中";
+      return false;
+    }
+
+    function analyzePreRiseSignals(targetRow) {
+      const counts = Object.fromEntries(aiSignalDefinitions.map(([key]) => [key, 0]));
+      const dates = [];
+      let observedDays = 0;
+      for (let lookback = 30; lookback >= 20; lookback -= 1) {
+        const row = calculateTechnicalRowsAtLookback(lookback).find((item) => String(item.code) === String(targetRow.code));
+        if (!row?.date) continue;
+        observedDays += 1;
+        dates.push(row.date);
+        aiSignalDefinitions.forEach(([key]) => {
+          if (isAiSignalActive(row, key)) counts[key] += 1;
+        });
+      }
+      const rankedSignals = aiSignalDefinitions
+        .map(([key, label]) => ({ key, label, count: counts[key] }))
+        .filter((signal) => signal.count > 0)
+        .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "ja"));
+      return {
+        observedDays,
+        fromDate: dates[0] || "—",
+        toDate: dates.at(-1) || "—",
+        rankedSignals
+      };
+    }
+
+    function renderAiAnalysis() {
+      const table = document.getElementById("aiAnalysisTable");
+      const summary = document.getElementById("aiAnalysisSummary");
+      if (!table || !summary) return;
+      const currentRows = calculateTechnicalRowsAtLookback(0)
+        .filter((row) => Number.isFinite(Number(row.priceChange25)))
+        .sort((a, b) => Number(b.priceChange25) - Number(a.priceChange25))
+        .slice(0, 12);
+      const analyses = currentRows.map((row) => ({ row, analysis: analyzePreRiseSignals(row) }));
+      const allSignals = new Map();
+      analyses.forEach(({ analysis }) => {
+        analysis.rankedSignals.slice(0, 4).forEach((signal) => {
+          allSignals.set(signal.label, (allSignals.get(signal.label) || 0) + 1);
+        });
+      });
+      const commonSignals = [...allSignals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+      summary.innerHTML = [
+        `<div class="mini"><span class="tag">対象</span><b>25日上昇率 上位${currentRows.length}銘柄</b><p>直近の25日株価上昇率が高い銘柄を選び、上昇前の30〜20営業日前を振り返ります。</p></div>`,
+        `<div class="mini"><span class="tag warn">観察期間</span><b>30〜20営業日前</b><p>各銘柄につき最大11営業日分のテクニカルサインを日別に再計算しています。</p></div>`,
+        `<div class="mini"><span class="tag dark">共通サイン</span><b>${commonSignals.map(([label, count]) => `${label} ${count}件`).join(" / ") || "—"}</b><p>上位銘柄で目立ったサインの出現傾向です。</p></div>`
+      ].join("");
+      table.querySelector("thead").innerHTML = `<tr>
+        <th>銘柄</th><th>コード</th><th>セクタ</th><th>現在25日上昇率</th><th>観察期間</th><th>主な事前サイン</th><th>読み方</th>
+      </tr>`;
+      table.querySelector("tbody").innerHTML = analyses.map(({ row, analysis }) => {
+        const signalText = analysis.rankedSignals.length
+          ? analysis.rankedSignals.slice(0, 5).map((signal) => `${signal.label} ${signal.count}/${analysis.observedDays}`).join("<br>")
+          : "明確な反復サインなし";
+        const interpretation = analysis.rankedSignals.length
+          ? `${analysis.rankedSignals[0].label}が最も多く、上昇前から需給・トレンド改善が出ていた可能性。`
+          : "上昇前のサインは分散しており、材料・決算反応などテクニカル以外の要因確認が必要。";
+        return `<tr>
+          <td>${row.name}</td>
+          <td class="code">${row.code}</td>
+          <td>${row.sector}</td>
+          <td>${colorNumber(row.priceChange25, `${Number(row.priceChange25).toLocaleString("ja-JP")}%`)}</td>
+          <td>${analysis.fromDate}〜${analysis.toDate}</td>
+          <td>${signalText}</td>
+          <td>${interpretation}</td>
+        </tr>`;
+      }).join("");
     }
 
     function renderTechnicalControls() {
@@ -2531,6 +2647,7 @@
       input.addEventListener("change", renderChart);
     });
     renderTechnicalTable();
+    renderAiAnalysis();
     renderPriceDataTimestamp();
   </script>
 </body>
