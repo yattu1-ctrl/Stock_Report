@@ -1284,6 +1284,15 @@
           </table>
         </div>
         <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">対象は現在の25日上昇率上位銘柄。サイン回数は30〜20営業日前の11日間で、条件に該当した日数を示します。</p>
+        <h3>注目サインによる50日前スクリーニング検証</h3>
+        <div class="grid" id="aiBacktestSummary"></div>
+        <div class="table-scroll">
+          <table id="aiBacktestTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="eyebrow" style="color: var(--muted); margin-top: 8px;">上のAI分析で目立ったサイン上位3つをAND条件として、50営業日前のデータで抽出し、50営業日前終値から25営業日前終値までの騰落率を検証します。</p>
       </section>
     </article>
 
@@ -2237,7 +2246,9 @@
     function renderAiAnalysis() {
       const table = document.getElementById("aiAnalysisTable");
       const summary = document.getElementById("aiAnalysisSummary");
-      if (!table || !summary) return;
+      const backtestTable = document.getElementById("aiBacktestTable");
+      const backtestSummary = document.getElementById("aiBacktestSummary");
+      if (!table || !summary || !backtestTable || !backtestSummary) return;
       const currentRows = calculateTechnicalRowsAtLookback(0)
         .filter((row) => Number.isFinite(Number(row.priceChange25)))
         .sort((a, b) => Number(b.priceChange25) - Number(a.priceChange25))
@@ -2246,14 +2257,18 @@
       const allSignals = new Map();
       analyses.forEach(({ analysis }) => {
         analysis.rankedSignals.slice(0, 4).forEach((signal) => {
-          allSignals.set(signal.label, (allSignals.get(signal.label) || 0) + 1);
+          const current = allSignals.get(signal.key) || { label: signal.label, count: 0 };
+          allSignals.set(signal.key, { label: signal.label, count: current.count + 1 });
         });
       });
-      const commonSignals = [...allSignals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const commonSignals = [...allSignals.entries()]
+        .map(([key, value]) => ({ key, label: value.label, count: value.count }))
+        .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "ja"))
+        .slice(0, 3);
       summary.innerHTML = [
         `<div class="mini"><span class="tag">対象</span><b>25日上昇率 上位${currentRows.length}銘柄</b><p>直近の25日株価上昇率が高い銘柄を選び、上昇前の30〜20営業日前を振り返ります。</p></div>`,
         `<div class="mini"><span class="tag warn">観察期間</span><b>30〜20営業日前</b><p>各銘柄につき最大11営業日分のテクニカルサインを日別に再計算しています。</p></div>`,
-        `<div class="mini"><span class="tag dark">共通サイン</span><b>${commonSignals.map(([label, count]) => `${label} ${count}件`).join(" / ") || "—"}</b><p>上位銘柄で目立ったサインの出現傾向です。</p></div>`
+        `<div class="mini"><span class="tag dark">共通サイン</span><b>${commonSignals.map((signal) => `${signal.label} ${signal.count}件`).join(" / ") || "—"}</b><p>上位銘柄で目立ったサインの出現傾向です。</p></div>`
       ].join("");
       table.querySelector("thead").innerHTML = `<tr>
         <th>銘柄</th><th>コード</th><th>セクタ</th><th>現在25日上昇率</th><th>観察期間</th><th>主な事前サイン</th><th>読み方</th>
@@ -2275,6 +2290,48 @@
           <td>${interpretation}</td>
         </tr>`;
       }).join("");
+      const signalKeys = commonSignals.map((signal) => signal.key);
+      const rows50 = calculateTechnicalRowsAtLookback(50);
+      const rows25ByCode = new Map(calculateTechnicalRowsAtLookback(25).map((row) => [String(row.code), row]));
+      const screenedRows = signalKeys.length === 0 ? [] : rows50
+        .filter((row) => signalKeys.every((key) => isAiSignalActive(row, key)))
+        .map((row) => {
+          const futureRow = rows25ByCode.get(String(row.code));
+          const return25 = percentChange(Number(futureRow?.currentPrice), Number(row.currentPrice));
+          return {
+            row,
+            futureRow,
+            return25: roundNumber(return25),
+            matchedSignals: signalKeys.map((key) => aiSignalDefinitions.find(([signalKey]) => signalKey === key)?.[1] || key)
+          };
+        })
+        .filter((item) => Number.isFinite(Number(item.return25)))
+        .sort((a, b) => Number(b.return25) - Number(a.return25));
+      const averageReturn = screenedRows.length
+        ? screenedRows.reduce((sum, item) => sum + Number(item.return25), 0) / screenedRows.length
+        : null;
+      const winRate = screenedRows.length
+        ? screenedRows.filter((item) => Number(item.return25) > 0).length / screenedRows.length * 100
+        : null;
+      backtestSummary.innerHTML = [
+        `<div class="mini"><span class="tag">条件</span><b>${commonSignals.map((signal) => signal.label).join(" + ") || "—"}</b><p>現在の上昇銘柄で目立ったサイン上位3つをAND条件として使用。</p></div>`,
+        `<div class="mini"><span class="tag warn">抽出数</span><b>${screenedRows.length}銘柄</b><p>50営業日前のテクニカルデータで条件を満たした銘柄数です。</p></div>`,
+        `<div class="mini"><span class="tag dark">25日後成績</span><b>${averageReturn == null ? "—" : `平均 ${colorNumber(averageReturn, `${averageReturn.toFixed(2)}%`)} / 勝率 ${winRate.toFixed(1)}%`}</b><p>50営業日前終値から25営業日前終値までの騰落率。</p></div>`
+      ].join("");
+      backtestTable.querySelector("thead").innerHTML = `<tr>
+        <th>銘柄</th><th>コード</th><th>セクタ</th><th>50日前終値</th><th>25日前終値</th><th>25日間騰落率</th><th>該当サイン</th>
+      </tr>`;
+      backtestTable.querySelector("tbody").innerHTML = screenedRows.length ? screenedRows.map(({ row, futureRow, return25, matchedSignals }) => (
+        `<tr>
+          <td>${row.name}</td>
+          <td class="code">${row.code}</td>
+          <td>${row.sector}</td>
+          <td>${Number(row.currentPrice).toLocaleString("ja-JP")}円<br><span class="eyebrow" style="color: var(--muted);">${row.date}</span></td>
+          <td>${Number(futureRow.currentPrice).toLocaleString("ja-JP")}円<br><span class="eyebrow" style="color: var(--muted);">${futureRow.date}</span></td>
+          <td>${colorNumber(return25, `${Number(return25).toLocaleString("ja-JP")}%`)}</td>
+          <td>${matchedSignals.join("<br>")}</td>
+        </tr>`
+      )).join("") : `<tr><td colspan="7">条件に合致する銘柄はありませんでした。条件を上位2サインにするなど、次の検証で調整できます。</td></tr>`;
     }
 
     function renderTechnicalControls() {
