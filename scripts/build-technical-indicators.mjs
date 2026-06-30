@@ -266,7 +266,7 @@ function indicatorsFor(stock, prices) {
     output[`ma${days}Divergence`] = round(pct(currentPrice, ma));
   }
 
-  for (const days of [5, 10, 25]) {
+  for (const days of [5, 10, 25, 50, 100, 200]) {
     output[`priceChange${days}`] = round(pct(currentPrice, closes.at(-1 - days)));
   }
 
@@ -327,6 +327,7 @@ const browserRows = output.data.map((row) => ({
   code: row.code,
   sector: row.sector,
   currentPrice: row.currentPrice,
+  date: row.date,
   ma5: row.ma5,
   ma10: row.ma10,
   ma25: row.ma25,
@@ -347,6 +348,9 @@ const browserRows = output.data.map((row) => ({
   priceChange5: row.priceChange5,
   priceChange10: row.priceChange10,
   priceChange25: row.priceChange25,
+  priceChange50: row.priceChange50,
+  priceChange100: row.priceChange100,
+  priceChange200: row.priceChange200,
   macd: row.macd,
   macdSignal: row.macdSignal,
   macdHistogram: row.macdHistogram,

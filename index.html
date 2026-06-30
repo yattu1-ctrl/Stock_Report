@@ -1229,6 +1229,7 @@
           <label><input type="radio" name="technicalScreenMode" value="and" checked>AND</label>
           <label><input type="radio" name="technicalScreenMode" value="or">OR</label>
           <label>セクタ<select id="technicalSectorFilter"><option value="">すべて</option></select></label>
+          <label>計算基準<select id="technicalLookbackSelect" aria-label="何日前の終値で計算するか"></select></label>
           <label><input type="checkbox" class="technical-ma-pattern" value="maOrder5">MA順 5/10/25/75/200</label>
           <label><input type="checkbox" class="technical-ma-pattern" value="maOrder10With75_200Up">MA順 10/5/25/75/200 + 75/200上昇</label>
           <label><input type="checkbox" class="technical-ma-pattern" value="maOrder5With10_75_200Up">MA順 5/10/25/75/200 + 10/75/200上昇</label>
@@ -1599,7 +1600,7 @@
       ["ma5", "5日移動平均"], ["ma10", "10日移動平均"], ["ma25", "25日移動平均"], ["ma75", "75日移動平均"], ["ma100", "100日移動平均"], ["ma200", "200日移動平均"],
       ["ma5Slope", "5日線上昇率"], ["ma10Slope", "10日線上昇率"], ["ma25Slope", "25日線上昇率"], ["ma75Slope", "75日線上昇率"], ["ma100Slope", "100日線上昇率"], ["ma200Slope", "200日線上昇率"],
       ["ma5Divergence", "5日線乖離率"], ["ma10Divergence", "10日線乖離率"], ["ma25Divergence", "25日線乖離率"], ["ma75Divergence", "75日線乖離率"], ["ma200Divergence", "200日線乖離率"],
-      ["priceChange5", "5日株価上昇率"], ["priceChange10", "10日株価上昇率"], ["priceChange25", "25日株価上昇率"],
+      ["priceChange5", "5日株価上昇率"], ["priceChange10", "10日株価上昇率"], ["priceChange25", "25日株価上昇率"], ["priceChange50", "50日株価上昇率"], ["priceChange100", "100日株価上昇率"], ["priceChange200", "200日株価上昇率"],
       ["macd", "MACD"], ["macdHistogram", "MACDヒストグラム"], ["rsi", "RSI"],
       ["zigzag7", "ZigZag 7"], ["zigzag7TurnPrice", "ZigZag7 転換目安"], ["zigzag7RecentExtreme", "ZigZag7 直近節目"],
       ["zigzag20", "ZigZag 20"], ["zigzag20TurnPrice", "ZigZag20 転換目安"], ["zigzag20RecentExtreme", "ZigZag20 直近節目"]
@@ -1942,6 +1943,197 @@
       return true;
     }
 
+    const technicalLookbackCache = new Map();
+
+    function average(values) {
+      if (!values.length || values.some((value) => !Number.isFinite(value))) return null;
+      return values.reduce((sum, value) => sum + value, 0) / values.length;
+    }
+
+    function percentChange(current, previous) {
+      if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null;
+      return ((current / previous) - 1) * 100;
+    }
+
+    function roundNumber(value, digits = 2) {
+      if (!Number.isFinite(value)) return null;
+      return Number(value.toFixed(digits));
+    }
+
+    function trailingAverage(values, days, offset = 0) {
+      const end = values.length - offset;
+      const start = end - days;
+      if (start < 0) return null;
+      return average(values.slice(start, end));
+    }
+
+    function emaSeriesForTable(values, days) {
+      if (values.length < days) return values.map(() => null);
+      const multiplier = 2 / (days + 1);
+      const output = values.map(() => null);
+      let current = average(values.slice(0, days));
+      output[days - 1] = current;
+      for (let index = days; index < values.length; index += 1) {
+        current = (values[index] - current) * multiplier + current;
+        output[index] = current;
+      }
+      return output;
+    }
+
+    function macdDetailsForTable(closes) {
+      const ema12 = emaSeriesForTable(closes, 12);
+      const ema26 = emaSeriesForTable(closes, 26);
+      const macdSeries = closes.map((_, index) => (
+        Number.isFinite(ema12[index]) && Number.isFinite(ema26[index]) ? ema12[index] - ema26[index] : null
+      ));
+      const validMacd = macdSeries.filter(Number.isFinite);
+      const signalSeriesValid = emaSeriesForTable(validMacd, 9);
+      const signalSeries = macdSeries.map(() => null);
+      let validIndex = 0;
+      macdSeries.forEach((value, index) => {
+        if (!Number.isFinite(value)) return;
+        signalSeries[index] = signalSeriesValid[validIndex];
+        validIndex += 1;
+      });
+      const macd = macdSeries.at(-1);
+      const signal = signalSeries.at(-1);
+      const goldenCrossWithinBelowZero = (days) => {
+        const recentStart = Math.max(1, macdSeries.length - days);
+        return Number.isFinite(macd) && macd <= 0 && macdSeries.some((value, index) => {
+          if (index < recentStart) return false;
+          const previousMacd = macdSeries[index - 1];
+          const previousSignal = signalSeries[index - 1];
+          const currentSignal = signalSeries[index];
+          if (![previousMacd, previousSignal, value, currentSignal].every(Number.isFinite)) return false;
+          return previousMacd <= previousSignal && value > currentSignal && value <= 0;
+        });
+      };
+      return {
+        macd,
+        signal,
+        histogram: Number.isFinite(macd) && Number.isFinite(signal) ? macd - signal : null,
+        goldenCrossWithin5BelowZero: goldenCrossWithinBelowZero(5),
+        goldenCrossWithin10BelowZero: goldenCrossWithinBelowZero(10)
+      };
+    }
+
+    function rsiForTable(closes, days = 14) {
+      if (closes.length <= days) return null;
+      const recent = closes.slice(-days - 1);
+      const changes = recent.slice(1).map((value, index) => value - recent[index]);
+      const gains = changes.map((change) => Math.max(change, 0));
+      const losses = changes.map((change) => Math.max(-change, 0));
+      const avgGain = average(gains);
+      const avgLoss = average(losses);
+      if (avgGain == null || avgLoss == null) return null;
+      if (avgLoss === 0) return 100;
+      const relativeStrength = avgGain / avgLoss;
+      return 100 - (100 / (1 + relativeStrength));
+    }
+
+    function zigzagForTable(rows, depth) {
+      if (rows.length < depth * 2 + 1) return null;
+      const pivots = [];
+      for (let index = depth; index < rows.length - depth; index += 1) {
+        const windowRows = rows.slice(index - depth, index + depth + 1);
+        const high = Math.max(...windowRows.map((row) => row.h).filter(Number.isFinite));
+        const low = Math.min(...windowRows.map((row) => row.l).filter(Number.isFinite));
+        if (Number.isFinite(rows[index].h) && rows[index].h === high) pivots.push({ type: "high", index, date: rows[index].d, value: rows[index].h });
+        if (Number.isFinite(rows[index].l) && rows[index].l === low) pivots.push({ type: "low", index, date: rows[index].d, value: rows[index].l });
+      }
+      const cleaned = [];
+      pivots.forEach((pivot) => {
+        const last = cleaned.at(-1);
+        if (!last) {
+          cleaned.push(pivot);
+          return;
+        }
+        if (last.type === pivot.type) {
+          if ((pivot.type === "high" && pivot.value > last.value) || (pivot.type === "low" && pivot.value < last.value)) {
+            cleaned[cleaned.length - 1] = pivot;
+          }
+          return;
+        }
+        cleaned.push(pivot);
+      });
+      const lastPivot = cleaned.at(-1);
+      if (!lastPivot) return null;
+      const recentRows = rows.slice(lastPivot.index);
+      const recentHigh = Math.max(...recentRows.map((row) => row.h).filter(Number.isFinite));
+      const recentLow = Math.min(...recentRows.map((row) => row.l).filter(Number.isFinite));
+      const current = rows.at(-1)?.c;
+      if (!Number.isFinite(current)) return null;
+      const change = percentChange(current, lastPivot.value);
+      let trend = "横ばい";
+      if (Number.isFinite(change) && Math.abs(change) >= 1) {
+        trend = lastPivot.type === "low" ? "上昇中" : "下降中";
+      }
+      const upTurnPrice = Number.isFinite(recentLow) ? recentLow * 1.01 : null;
+      const downTurnPrice = Number.isFinite(recentHigh) ? recentHigh * 0.99 : null;
+      return {
+        trend,
+        recentExtreme: trend === "上昇中" ? recentHigh : trend === "下降中" ? recentLow : null,
+        turnPrice: trend === "上昇中" ? downTurnPrice : trend === "下降中" ? upTurnPrice : null
+      };
+    }
+
+    function technicalRowsForLookback() {
+      const lookback = Number(document.getElementById("technicalLookbackSelect")?.value || 0);
+      if (lookback === 0) return window.technicalRows || [];
+      if (technicalLookbackCache.has(lookback)) return technicalLookbackCache.get(lookback);
+      const rows = stockRows.map((stock) => {
+        const history = window.priceHistoryRows?.[stock.code] || [];
+        const usableRows = lookback > 0 ? history.slice(0, -lookback) : history;
+        if (!usableRows.length) {
+          return { name: stock.name, code: stock.code, sector: stock.sector, currentPrice: null, date: null };
+        }
+        const closes = usableRows.map((row) => row.c);
+        const currentPrice = closes.at(-1);
+        const output = {
+          name: stock.name,
+          code: stock.code,
+          sector: stock.sector,
+          currentPrice: roundNumber(currentPrice),
+          date: usableRows.at(-1)?.d || null
+        };
+        [5, 10, 25, 75, 100, 200].forEach((days) => {
+          const ma = trailingAverage(closes, days);
+          const previousMa = trailingAverage(closes, days, 1);
+          output[`ma${days}`] = roundNumber(ma);
+          output[`ma${days}Slope`] = roundNumber(percentChange(ma, previousMa));
+          output[`ma${days}Divergence`] = roundNumber(percentChange(currentPrice, ma));
+        });
+        [5, 10, 25, 50, 100, 200].forEach((days) => {
+          output[`priceChange${days}`] = roundNumber(percentChange(currentPrice, closes.at(-1 - days)));
+        });
+        const macdOutput = macdDetailsForTable(closes);
+        output.macd = roundNumber(macdOutput.macd);
+        output.macdSignal = roundNumber(macdOutput.signal);
+        output.macdHistogram = roundNumber(macdOutput.histogram);
+        output.macdGoldenCrossWithin5BelowZero = macdOutput.goldenCrossWithin5BelowZero;
+        output.macdGoldenCrossWithin10BelowZero = macdOutput.goldenCrossWithin10BelowZero;
+        output.rsi = roundNumber(rsiForTable(closes));
+        [7, 20].forEach((depth) => {
+          const zz = zigzagForTable(usableRows, depth);
+          output[`zigzag${depth}`] = zz?.trend ?? null;
+          output[`zigzag${depth}TurnPrice`] = roundNumber(zz?.turnPrice);
+          output[`zigzag${depth}RecentExtreme`] = roundNumber(zz?.recentExtreme);
+        });
+        return output;
+      });
+      technicalLookbackCache.set(lookback, rows);
+      return rows;
+    }
+
+    function renderTechnicalLookbackSelect() {
+      const select = document.getElementById("technicalLookbackSelect");
+      if (!select) return;
+      select.innerHTML = Array.from({ length: 101 }, (_, days) => (
+        `<option value="${days}">${days === 0 ? "0日前（最新）" : `${days}日前`}</option>`
+      )).join("");
+      select.addEventListener("change", renderTechnicalTable);
+    }
+
     function renderTechnicalControls() {
       const controls = document.getElementById("technicalControls");
       if (!controls) return;
@@ -2221,7 +2413,7 @@
     function renderTechnicalTable() {
       const table = document.getElementById("technicalTable");
       if (!table) return;
-      const rows = window.technicalRows || [];
+      const rows = technicalRowsForLookback();
       const checked = Array.from(document.querySelectorAll("#technicalControls input:checked")).map((input) => input.value);
       const screenMode = document.querySelector("input[name='technicalScreenMode']:checked")?.value || "and";
       const selectedSector = document.getElementById("technicalSectorFilter")?.value || "";
@@ -2231,7 +2423,7 @@
         filter: document.querySelector(`#technicalControls select[data-filter="${key}"]`)?.value || "all"
       })).filter((item) => item.filter !== "all");
       const baseColumns = [
-        ["chartAction", "チャート"], ["name", "銘柄名"], ["code", "コード"], ["currentPrice", "現在株価"], ["sector", "セクタ"]
+        ["chartAction", "チャート"], ["name", "銘柄名"], ["code", "コード"], ["currentPrice", "基準日終値"], ["date", "基準日"], ["sector", "セクタ"]
       ];
       const visibleKeys = new Set(checked);
       if (visibleKeys.has("zigzag7")) {
@@ -2297,6 +2489,7 @@
     renderStockListTable();
     renderTechnicalControls();
     renderTechnicalSectorFilter();
+    renderTechnicalLookbackSelect();
     hydratePortfolioTechnicalColumns();
     document.querySelectorAll("input[name='stockScreenMode']").forEach((input) => {
       input.addEventListener("change", renderStockListTable);
