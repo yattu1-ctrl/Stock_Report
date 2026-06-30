@@ -108,6 +108,27 @@ function macdDetails(closes) {
   };
 }
 
+function aggregateWeeklyPrices(prices) {
+  const groups = new Map();
+  prices.forEach((row) => {
+    const date = new Date(`${row.date}T00:00:00+09:00`);
+    const monday = new Date(date);
+    const day = monday.getDay() || 7;
+    monday.setDate(monday.getDate() - day + 1);
+    const key = monday.toISOString().slice(0, 10);
+    if (!groups.has(key)) {
+      groups.set(key, { date: row.date, high: row.high, low: row.low, close: row.close });
+      return;
+    }
+    const group = groups.get(key);
+    group.high = Math.max(group.high, row.high);
+    group.low = Math.min(group.low, row.low);
+    group.close = row.close;
+    group.date = row.date;
+  });
+  return Array.from(groups.values());
+}
+
 function rsi(closes, days = 14) {
   if (closes.length <= days) return null;
   const changes = closes.slice(-days - 1).slice(1).map((value, index) => value - closes.slice(-days - 1)[index]);
@@ -276,6 +297,8 @@ function indicatorsFor(stock, prices) {
   output.macdHistogram = round(macdOutput.histogram);
   output.macdGoldenCrossWithin5BelowZero = macdOutput.goldenCrossWithin5BelowZero;
   output.macdGoldenCrossWithin10BelowZero = macdOutput.goldenCrossWithin10BelowZero;
+  const weeklyMacdOutput = macdDetails(aggregateWeeklyPrices(prices).map((row) => row.close));
+  output.weeklyMacdGoldenCrossWithin5BelowZero = weeklyMacdOutput.goldenCrossWithin5BelowZero;
   output.rsi = round(rsi(closes));
 
   for (const depth of [7, 20]) {
@@ -356,6 +379,7 @@ const browserRows = output.data.map((row) => ({
   macdHistogram: row.macdHistogram,
   macdGoldenCrossWithin5BelowZero: row.macdGoldenCrossWithin5BelowZero,
   macdGoldenCrossWithin10BelowZero: row.macdGoldenCrossWithin10BelowZero,
+  weeklyMacdGoldenCrossWithin5BelowZero: row.weeklyMacdGoldenCrossWithin5BelowZero,
   rsi: row.rsi,
   zigzag7: row.zigzag7,
   zigzag7Changed: row.zigzag7Changed,
